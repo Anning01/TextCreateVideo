@@ -22,8 +22,8 @@ class Main:
             'Authorization': f'Bearer {self.apikey}-{self.appId}'
         }
         data = {
-            "chatId": "",
             "stream": False,
+            # "chatId": "3232",
             "messages": [
                 {
                     "content": '根据下面的内容描述，生成一副画面并用英文单词表示：' + param,
@@ -35,9 +35,13 @@ class Main:
         # 发送HTTP POST请求
         response = requests.post(self.url, data=json_data, headers=headers)
         result_json = json.loads(response.text)
-        if result_json.get('code') != 200:
+        if response.status_code != 200:
             print("-----------FastAPI出错了-----------")
             return False
         # 输出结果
         return result_json['responseData'][0]['answer']
 
+
+if __name__ == '__main__':
+    m = Main()
+    m.prompt_generation_chatgpt("天空一声惊响，老子闪亮登场。")
