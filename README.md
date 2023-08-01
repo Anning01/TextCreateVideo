@@ -50,6 +50,6 @@ Diffusion+MoviePy实现，项目整体设计为组件式结构，将第三方做
 <hr/>
 QQ群：100419879
 
-![Image text](https://ibb.co/jRYLzJ9)
+![Image text](https://i.ibb.co/5F35kKX/IMG-7203.jpg)
 
 wx群：864399407
