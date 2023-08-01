@@ -1,0 +1,4 @@
+.env
+media
+SDK/Baidu/Voice/access_token.json
+*.pyc
