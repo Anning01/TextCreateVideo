@@ -17,6 +17,13 @@ Diffusion+MoviePy实现，项目整体设计为组件式结构，将第三方做
 <p>文件不要太大，最后一章一章来生成。</p>
 </ol>
 
+```shell
+# 先打开 config.py 文件 配置好内容
+> python -m venv .venv
+> sourec .venv/bin/activate
+> pip install -r requirement.txt
+```
+
 <h2>代码逻辑</h2>
 <ul>
 <li>
