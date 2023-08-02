@@ -20,7 +20,7 @@ Diffusion+MoviePy实现，项目整体设计为组件式结构，将第三方做
 ```shell
 # 先打开 config.py 文件 配置好内容
 > python -m venv .venv
-> sourec .venv/bin/activate
+> source .venv/bin/activate
 > pip install -r requirement.txt
 ```
 

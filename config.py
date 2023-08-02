@@ -5,7 +5,7 @@
 # @time:2023/08/01 16:02
 # @file:config.py
 """
-启动该文件，将media下的xxx.txt转为视频
+该文件，将media下的xxx.txt转为视频
 """
 import os
 from dotenv import load_dotenv
