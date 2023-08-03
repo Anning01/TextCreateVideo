@@ -19,7 +19,7 @@ class Main:
         path = os.path.join(file_path, filepath)
         if not os.path.exists(path):
             raise FileNotFoundError(f"文件不存在，根路名为{path}")
-        file = open(path, 'r')
+        file = open(path, 'r', encoding='utf-8')
         content = file.read().replace('\n', '')
         return self.txt_short(content.split('。'))
 

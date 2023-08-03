@@ -74,7 +74,7 @@ class Main:
             image_bytes = base64.b64decode(img_response['images'][0])
             image = Image.open(io.BytesIO(image_bytes))
             # 图片存放
-            new_path = file_path + 'picture'
+            new_path = os.path.join(file_path, 'picture')
             if not os.path.exists(new_path):
                 os.makedirs(new_path)
             picture_name = str(obj['index']) + ".png"

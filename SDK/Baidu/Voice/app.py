@@ -30,13 +30,13 @@ class Main:
         print("-----------向百度获取 access_token API 发起请求了-----------")
         access_token = response.json()
         access_token.update({"time": datetime.now().strftime("%Y-%m-%d")})
-        with open('access_token.json', 'w') as f:
+        with open('access_token.json', 'w', encoding='utf-8') as f:
             json.dump(access_token, f)
         return access_token
 
     def get_access_token(self):
         if os.path.exists('access_token.json'):
-            with open('access_token.json', 'r') as f:
+            with open('access_token.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
             time = data.get("time")
             if time and (datetime.now() - datetime.strptime(time, '%Y-%m-%d')).days >= 29:
@@ -75,6 +75,9 @@ class Main:
         data = urllib.parse.urlencode(data)
         response = requests.post(url, data)
         if response.status_code == 200:
+            if response.json().get("err_no"):
+                print(f"-----------Baidu API 返回错误代码：{response.json().get('err_msg')}-----------")
+                return False
             result_str = response.content
             save_file = str(index) + '.' + FORMAT
             audio = os.path.join(file_path, "audio")
