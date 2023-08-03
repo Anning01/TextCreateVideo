@@ -77,10 +77,10 @@ class Main:
         if response.status_code == 200:
             result_str = response.content
             save_file = str(index) + '.' + FORMAT
-            audio = file_path + "audio"
+            audio = os.path.join(file_path, "audio")
             if not os.path.isdir(audio):
                 os.mkdir(audio)
-            audio_path = f'{audio}/' + save_file
+            audio_path = os.path.join(audio, save_file)
             with open(audio_path, 'wb') as of:
                 of.write(result_str)
             return audio_path
@@ -90,4 +90,4 @@ class Main:
 
 if __name__ == '__main__':
     m = Main()
-    m.text_to_audio("叶无名是一个少林寺的俗家弟子，他天资聪颖，博览群书，精通天文地理和阴阳八卦", "叶无名")
+    m.text_to_audio("叶无名是一个少林寺的俗家弟子，他天资聪颖，博览群书，精通天文地理和阴阳八卦", 1)

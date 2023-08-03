@@ -20,7 +20,6 @@ class Main:
         """
         clips = []
         for index, value in enumerate(picture_path_list):
-
             audio_clip = AudioFileClip(audio_path_list[index])
             img_clip = ImageSequenceClip([picture_path_list[index]], audio_clip.duration)
             img_clip = img_clip.set_position(('center', 'center')).fl(self.fl_up, apply_to=['mask']).set_duration(
@@ -30,10 +29,11 @@ class Main:
             print(f"-----------生成第{index}段视频-----------")
         print(f"-----------开始合成视频-----------")
         final_clip = concatenate_videoclips(clips)
-        new_parent = file_path + "video/"
+        new_parent = os.path.join(file_path, "video")
         if not os.path.exists(new_parent):
             os.makedirs(new_parent)
-        final_clip.write_videofile(new_parent + name + ".mp4", fps=24, audio_codec="aac")
+        video_path = os.path.join(new_parent, name + ".mp4")
+        final_clip.write_videofile(video_path, fps=24, audio_codec="aac")
 
     def fl_up(self, gf, t):
         # 获取原始图像帧
@@ -53,11 +53,14 @@ class Main:
 
 if __name__ == '__main__':
     m = Main()
-    picture_path_list = ["/Users/anning/PycharmProjects/fastApiProject/SDK/StableDiffusion/picture/0.png",
-                         "/Users/anning/PycharmProjects/fastApiProject/SDK/StableDiffusion/picture/1.png",
-                         "/Users/anning/PycharmProjects/fastApiProject/SDK/StableDiffusion/picture/2.png"]
-    audio_path_list = ["/Users/anning/PycharmProjects/fastApiProject/SDK/Baidu/Voice/audio/0.wav",
-                       "/Users/anning/PycharmProjects/fastApiProject/SDK/Baidu/Voice/audio/1.wav",
-                       "/Users/anning/PycharmProjects/fastApiProject/SDK/Baidu/Voice/audio/2.wav"]
+    picture_path_list = [
+        "/Users/anning/PycharmProjects/fastApiProject/media/picture/0.png",
+        "/Users/anning/PycharmProjects/fastApiProject/media/picture/1.png",
+        "/Users/anning/PycharmProjects/fastApiProject/media/picture/2.png",
+        "/Users/anning/PycharmProjects/fastApiProject/media/picture/3.png"]
+    audio_path_list = [
+        "/Users/anning/PycharmProjects/fastApiProject/SDK/Baidu/Voice/audio/0.wav",
+        "/Users/anning/PycharmProjects/fastApiProject/SDK/Baidu/Voice/audio/1.wav",
+        "/Users/anning/PycharmProjects/fastApiProject/SDK/Baidu/Voice/audio/2.wav"]
     name = "可乐"
     m.merge_video(picture_path_list, audio_path_list, name)

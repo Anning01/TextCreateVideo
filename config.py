@@ -28,7 +28,7 @@ ForwardKey = os.getenv("ForwardKey") or ""
 sd_url = "http://127.0.0.1:7860/sdapi/v1/txt2img"
 
 # 文件默认位置
-file_path = os.getcwd() + "/media/"
+file_path = os.path.join(os.getcwd(), "media")
 if not os.path.exists(file_path):
     os.makedirs(file_path)
 

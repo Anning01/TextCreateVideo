@@ -2,3 +2,4 @@
 media
 SDK/Baidu/Voice/access_token.json
 *.pyc
+access_token.json
