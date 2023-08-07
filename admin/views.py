@@ -302,13 +302,3 @@ async def update_config(config: Config):
 #
 #     return success_data(config.model_dump(), "更新配置必须重新启动后台！")
 
-
-@router.get('/test')
-async def test(db: SessionLocal = Depends(get_db)):
-    book = db.query(Book).get(2)
-    path = str(project_path) + book.path
-    book.status = StatusEnum.underway
-    db.commit()
-    t = threading.Thread(target=CreateVideo().thread_func, args=[book, path, db])
-    t.start()
-    return {"code": 200}
