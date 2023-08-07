@@ -18,7 +18,7 @@ class Main:
     # 不好用
     # prompt = "moe style, large deep clear eyes, straight long length white hair, medieval dress, exposed shoulders, focus on face, full body, glamorous body, legs, high angle, hyper angle pose, trending on pixiv, detailed, illustration, shadowverse, granblue fantasy, cygames, mushimaro, anime detailed line work, game character, comic cover, volumetric lighting, atmospheric lighting"
 
-    def create_prompt_words(self, text_list: list, tags: dict):
+    async def create_prompt_words(self, text_list: list, tags: dict):
         """
         生成英文提示词
         :return: [{prompt, negative, text, index},...]
@@ -33,12 +33,12 @@ class Main:
         for index, value in enumerate(text_list):
             # 针对人物或者场景进行标签提示
             if tags:
-                value = self.tag_handle(value, tags)
-            prompt = instance_class_list[0].prompt_generation_chatgpt(value)
+                value = await self.tag_handle(value, tags)
+            prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
             if not prompt:
                 if len(instance_class_list) >= 1:
                     instance_class_list.pop(0)
-                    prompt = instance_class_list[0].prompt_generation_chatgpt(value)
+                    prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
                     if not prompt:
                         print("------fastgpt和API2D都无法使用---------")
                         raise Exception("请检查代码")
@@ -54,7 +54,7 @@ class Main:
             })
         return data
 
-    def tag_handle(self, text: str, tag_dict: dict):
+    async def tag_handle(self, text: str, tag_dict: dict):
         """
         用于处理用户的标签
         :return:

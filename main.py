@@ -1,6 +1,12 @@
+import uvicorn
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
+from starlette.responses import HTMLResponse
 
-app = FastAPI()
+import admin.views
+from admin import models
+from admin.databases import engine
 
 """
 第一步、将用户输入的文本进行切割，按照逗号或者句号切割
@@ -30,12 +36,43 @@ negative:英文反向提示词
 输出的数据，[index.mp4, ...]
 """
 
+models.Base.metadata.create_all(bind=engine)
 
-@app.get("/")
+app = FastAPI()
+
+
+origins = [
+    "*",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"message": "Hello World"}
+    return open("dist/index.html", 'r').read()
 
 
 @app.get("/hello/{name}")
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
+
+
+app.include_router(
+    admin.views.router,
+    prefix="",
+    tags=["后台"],
+    responses={404: {"description": "Not found"}},
+)
+
+app.mount('/media', StaticFiles(directory="media"), 'media')
+app.mount('', StaticFiles(directory="dist"), 'dist')
+
+if __name__ == '__main__':
+    uvicorn.run("main:app", host="localhost", port=8001, reload=True)

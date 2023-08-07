@@ -14,7 +14,7 @@ class Main:
     appId = appId
     url = "https://fastgpt.run/api/openapi/v1/chat/completions"
 
-    def prompt_generation_chatgpt(self, param):
+    async def prompt_generation_chatgpt(self, param):
         # 发送HTTP POST请求
         headers = {
             'Content-Type': 'application/json',
@@ -33,13 +33,17 @@ class Main:
         }
         json_data = json.dumps(data)
         # 发送HTTP POST请求
-        response = requests.post(self.url, data=json_data, headers=headers)
+        response = requests.post(self.url, data=json_data, headers=headers, timeout=3)
         result_json = json.loads(response.text)
         if response.status_code != 200:
             print("-----------FastAPI出错了-----------")
             return False
         # 输出结果
-        return result_json['responseData'][0]['answer']
+        if result_json.get('responseData'):
+            return result_json['responseData'][0]['answer']
+        else:
+            print(f"-----------FastAPI {result_json.get('message')}-----------")
+            return False
 
 
 if __name__ == '__main__':

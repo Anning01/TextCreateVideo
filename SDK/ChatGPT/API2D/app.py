@@ -7,13 +7,15 @@
 
 import requests
 from config import ForwardKey
+from requests import ConnectTimeout, ConnectionError
 
 
 class Main:
     ForwardKey = ForwardKey
-    url = "https://openai.api2d.net/v1/chat/completions"
+    # url = "https://openai.api2d.net/v1/chat/completions"
+    url = "https://oa.api2d.net/v1/chat/completions"
 
-    def prompt_generation_chatgpt(self, param):
+    async def prompt_generation_chatgpt(self, param):
         # 发送HTTP POST请求
         headers = {
             'Content-Type': 'application/json',
@@ -24,7 +26,15 @@ class Main:
             "model": "gpt-3.5-turbo",
             "messages": [{"role": "user", "content": '根据下面的内容描述，生成一副画面并用英文单词表示：' + param, }]
         }
-        response = requests.post(self.url, headers=headers, json=data)
+        try:
+            response = requests.post(self.url, headers=headers, json=data, timeout=15)
+        except ConnectTimeout:
+            raise ConnectionError("API2D连接超时，15秒未响应！")
+        except ConnectionError:
+            raise ConnectionError(f"连接错误，{self.url} 建立连接失败，请检查网络。")
+        except Exception as e:
+            raise Exception(e)
+
         print("-----------进入API2D-----------")
         if response.status_code != 200:
             return False

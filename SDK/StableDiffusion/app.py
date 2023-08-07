@@ -11,13 +11,13 @@ import io
 from PIL import Image
 
 import requests
-from config import sd_url, file_path
+from config import sd_url, file_path, project_path
 
 
 class Main:
     sd_url = sd_url
 
-    def draw_picture(self, obj_list):
+    def draw_picture(self, obj_list, book_name: str | None):
         """
         :param obj_list:
         :return: 图片地址列表
@@ -69,17 +69,31 @@ class Main:
                 "save_images": "true",
                 "alwayson_scripts": {}
             }
-            html = requests.post(self.sd_url, data=json.dumps(novel_dict))
+            try:
+                # 生成图片任务
+                html = requests.post(self.sd_url, data=json.dumps(novel_dict))
+            except:
+                raise ConnectionError("Stable Diffusion 连接失败，请查看ip+端口是否匹配，是否开启。")
             img_response = json.loads(html.text)
             image_bytes = base64.b64decode(img_response['images'][0])
             image = Image.open(io.BytesIO(image_bytes))
             # 图片存放
-            new_path = os.path.join(file_path, 'picture')
-            if not os.path.exists(new_path):
-                os.makedirs(new_path)
             picture_name = str(obj['index']) + ".png"
-            image_path = os.path.join(new_path, picture_name)
-            image.save(image_path)
-            picture_path_list.append(image_path)
+            if book_name:
+                name = book_name.rsplit(".", 1)[0]
+                path = os.path.join(file_path, name)
+                picture = os.path.join(path, "picture")
+                if not os.path.isdir(picture):
+                    os.mkdir(picture)
+                picture_path = os.path.join(picture, picture_name)
+                image.save(picture_path)
+                picture_path_list.append(picture_path.replace(str(project_path), ''))
+            else:
+                new_path = os.path.join(file_path, 'picture')
+                if not os.path.exists(new_path):
+                    os.makedirs(new_path)
+                image_path = os.path.join(new_path, picture_name)
+                image.save(image_path)
+                picture_path_list.append(image_path)
             print(f"-----------生成第{index}张图片-----------")
         return picture_path_list

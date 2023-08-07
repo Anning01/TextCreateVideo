@@ -8,16 +8,19 @@ import os
 from moviepy.editor import ImageSequenceClip, AudioFileClip, concatenate_videoclips
 import numpy as np
 
-from config import file_path
+from config import file_path, project_path
 
 
 class Main:
-    def merge_video(self, picture_path_list: list, audio_path_list: list, name: str):
+    def merge_video(self, picture_path_list: list, audio_path_list: list, name: str, is_web=False):
         """
         :param picture_path_list: 图片路径列表
         :param audio_path_list: 音频路径列表
         :return:
         """
+        if is_web:
+            picture_path_list = [str(project_path) + i for i in picture_path_list]
+            audio_path_list = [str(project_path) + i for i in audio_path_list]
         clips = []
         for index, value in enumerate(picture_path_list):
             audio_clip = AudioFileClip(audio_path_list[index])
@@ -29,11 +32,20 @@ class Main:
             print(f"-----------生成第{index}段视频-----------")
         print(f"-----------开始合成视频-----------")
         final_clip = concatenate_videoclips(clips)
-        new_parent = os.path.join(file_path, "video")
-        if not os.path.exists(new_parent):
-            os.makedirs(new_parent)
-        video_path = os.path.join(new_parent, name + ".mp4")
+        if is_web:
+            name = name.rsplit(".", 1)[0]
+            path = os.path.join(file_path, name)
+            video_path = os.path.join(path, "video")
+            if not os.path.isdir(video_path):
+                os.mkdir(video_path)
+            video_path = os.path.join(video_path, name + ".mp4")
+        else:
+            new_parent = os.path.join(file_path, "video")
+            if not os.path.exists(new_parent):
+                os.makedirs(new_parent)
+            video_path = os.path.join(new_parent, name + ".mp4")
         final_clip.write_videofile(video_path, fps=24, audio_codec="aac")
+        return video_path.replace(str(project_path), '')
 
     def fl_up(self, gf, t):
         # 获取原始图像帧

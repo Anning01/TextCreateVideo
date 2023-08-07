@@ -4,3 +4,7 @@ Pillow==10.0.0
 requests==2.31.0
 uvicorn==0.23.2
 fastapi==0.100.1
+sqlalchemy==2.0.19
+uvicorn==0.23.2
+tqdm==4.65.0
+python-dotenv==1.0.0

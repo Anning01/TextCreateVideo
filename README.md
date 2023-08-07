@@ -6,16 +6,13 @@
 Diffusion+MoviePy实现，项目整体设计为组件式结构，将第三方做成插件集成，实现项目热拔插，chatGPT故障或异常可以自动换成其他大模型，其他同上。
 
 <h2>更新信息</h2>
+使用教程视频：https://space.bilibili.com/50125441
+
+[2023/08/07] 实现web启动页面，上传文本，一键生成，配置信息，失败重载使用缓存数据。
+
 [2023/08/01] 发布第一版，实现文本到视频流的全过程
 
-<h2>使用方式</h2>
-<ol>
-<li>先下载Stable Diffusion, window电脑推荐使用B站大佬@秋葉aaaki制作并免费发布的Stable Diffusion WebUI启动器电脑桌面版。<a href="https://www.zmthome.com/site/5432.html">绘世</a> Mac 用户下载 <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui">官网</a> 插一嘴 Mac M1还是别装了，很慢😭</li>
-<li>由于我ChatGPT免费API次数用完了😭，所以用的第三方服务商的API <a href="https://fastgpt.run/">fastgpt</a>，我会在B站发视频教怎么用，新人注册送好几块钱，调用了几千上万次应该是不成问题（不是广告！），有chatGPT的API权限最好！</li>
-<li>百度合成语音API，免费的，B站会放视频</li>
-<li>看我config.py文件里要求的配置，配置完启动cli_demo.py 就能得到视频，文件都放在media文件中，后期会让异步启动main.py，使用web页面配置。</li>
-<p>文件不要太大，最后一章一章来生成。</p>
-</ol>
+<hr/>
 
 ```shell
 # 先打开 config.py 文件 配置好内容
@@ -23,6 +20,25 @@ Diffusion+MoviePy实现，项目整体设计为组件式结构，将第三方做
 > source .venv/bin/activate
 > pip install -r requirement.txt
 ```
+
+<h2>使用方式(页面)</h2>
+<ol>
+<li>先下载Stable Diffusion, window电脑推荐使用B站大佬@秋葉aaaki制作并免费发布的Stable Diffusion WebUI启动器电脑桌面版。<a href="https://www.zmthome.com/site/5432.html">绘世</a> Mac 用户下载 <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui">官网</a> 插一嘴 Mac M1还是别装了，很慢😭</li>
+<li>由于我ChatGPT免费API次数用完了😭，所以用的第三方服务商的API <a href="https://fastgpt.run/">fastgpt</a>，我会在B站发视频教怎么用，新人注册送好几块钱，调用了几千上万次应该是不成问题（不是广告！），有chatGPT的API权限最好！</li>
+<li>百度合成语音API，免费的，B站会放视频</li>
+<li>直接在项目目录下执行 python main.py 即可启动项目，打开网页即可使用。</li>
+</ol>
+
+<h2>使用方式(命令行)</h2>
+<ol>
+<li>先下载Stable Diffusion, window电脑推荐使用B站大佬@秋葉aaaki制作并免费发布的Stable Diffusion WebUI启动器电脑桌面版。<a href="https://www.zmthome.com/site/5432.html">绘世</a> Mac 用户下载 <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui">官网</a> 插一嘴 Mac M1还是别装了，很慢😭</li>
+<li>由于我ChatGPT免费API次数用完了😭，所以用的第三方服务商的API <a href="https://fastgpt.run/">fastgpt</a>，我会在B站发视频教怎么用，新人注册送好几块钱，调用了几千上万次应该是不成问题（不是广告！），有chatGPT的API权限最好！</li>
+<li>百度合成语音API，免费的，B站会放视频</li>
+<li>看我config.py文件里要求的配置，配置完启动cli_demo.py 就能得到视频，文件都放在media文件中。</li>
+<p>文件不要太大，好一章一章来生成。</p>
+</ol>
+
+
 
 <h2>代码逻辑</h2>
 <ul>

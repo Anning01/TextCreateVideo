@@ -8,25 +8,25 @@ import urllib
 from urllib.parse import quote_plus
 import uuid
 from datetime import datetime
-
+from tqdm import tqdm
 import requests
 import os
 import json
-from config import client_id, client_secret, file_path
+from config import client_id, client_secret, file_path, project_path
 
 
 class Main:
     client_id = client_id
     client_secret = client_secret
 
-    def create_access_token(self):
+    async def create_access_token(self):
         url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={self.client_id}&client_secret={self.client_secret}"
         payload = ""
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = requests.request("POST", url, headers=headers, data=payload, timeout=3)
         print("-----------向百度获取 access_token API 发起请求了-----------")
         access_token = response.json()
         access_token.update({"time": datetime.now().strftime("%Y-%m-%d")})
@@ -34,26 +34,27 @@ class Main:
             json.dump(access_token, f)
         return access_token
 
-    def get_access_token(self):
+    async def get_access_token(self):
         if os.path.exists('access_token.json'):
             with open('access_token.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
             time = data.get("time")
             if time and (datetime.now() - datetime.strptime(time, '%Y-%m-%d')).days >= 29:
-                return self.create_access_token()
+                return await self.create_access_token()
             return data
-        return self.create_access_token()
+        return await self.create_access_token()
 
-    def text_to_audio(self, text: str, index: int):
+    async def text_to_audio(self, text: str, index: int, bookname=None):
         url = "https://tsn.baidu.com/text2audio"
         text = text.encode('utf8')
         FORMATS = {3: "mp3", 4: "pcm", 5: "pcm", 6: "wav"}
         FORMAT = FORMATS[6]
+        access_token = await self.get_access_token()
         data = {
             # 合成的文本，文本长度必须小于1024GBK字节。建议每次请求文本不超过120字节，约为60个汉字或者字母数字。
             "tex": text,
             # access_token
-            "tok": self.get_access_token().get("access_token"),
+            "tok":  access_token.get("access_token"),
             # 用户唯一标识，用来计算UV值。建议填写能区分用户的机器 MAC 地址或 IMEI 码，长度为60字符以内
             "cuid": hex(uuid.getnode()),
             # 客户端类型选择，web端填写固定值1
@@ -73,24 +74,52 @@ class Main:
             "aue": FORMAT
         }
         data = urllib.parse.urlencode(data)
-        response = requests.post(url, data)
+        # 用流stream的方式获取url的数据
+        response = requests.post(url, data, stream=True, timeout=15)
+
+        # 拿到文件的长度，并把total初始化为0
+        total = int(response.headers.get('content-length', 0))
         if response.status_code == 200:
-            if response.json().get("err_no"):
-                print(f"-----------Baidu API 返回错误代码：{response.json().get('err_msg')}-----------")
-                return False
-            result_str = response.content
+            try:
+                res_json = response.json()
+                if res_json.get("err_no"):
+                    print(f"-----------Baidu API 返回错误代码：{res_json.get('err_msg')}-----------")
+                    return False
+            except:
+                # 数据不是json格式，应该是二进制数据，不做任何处理
+                pass
+
+            # result_str = response.content
             save_file = str(index) + '.' + FORMAT
-            audio = os.path.join(file_path, "audio")
+            if bookname:
+                name = bookname.rsplit(".", 1)[0]
+                path = os.path.join(file_path, name)
+                audio = os.path.join(path, "audio")
+                re = False
+            else:
+                audio = os.path.join(file_path, "audio")
+                re = True
             if not os.path.isdir(audio):
                 os.mkdir(audio)
             audio_path = os.path.join(audio, save_file)
-            with open(audio_path, 'wb') as of:
-                of.write(result_str)
-            return audio_path
+
+            with open(audio_path, 'wb') as file, tqdm(
+                    desc=save_file,
+                    total=total,
+                    unit='iB',
+                    unit_scale=True,
+                    unit_divisor=1024,
+            ) as bar:
+                for data in response.iter_content(chunk_size=1024):
+                    size = file.write(data)
+                    bar.update(size)
+
+            print(audio_path if re else audio_path.replace(str(project_path), ''))
+            return audio_path if re else audio_path.replace(str(project_path), '')
         else:
             return False
 
 
 if __name__ == '__main__':
-    m = Main()
-    m.text_to_audio("叶无名是一个少林寺的俗家弟子，他天资聪颖，博览群书，精通天文地理和阴阳八卦", 1)
+    import asyncio
+    asyncio.run(Main().text_to_audio("叶无名是一个少林寺的俗家弟子，他天资聪颖，博览群书，精通天文地理和阴阳八卦", 1))
