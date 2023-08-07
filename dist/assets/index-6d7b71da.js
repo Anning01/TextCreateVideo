@@ -1,0 +1,1 @@
+import{O as t}from"./index-a73d6ca3.js";import{l as e,a as l}from"./url-494494b7.js";const s=t("HomeModule",{state(){return{navBool:!1,dialogFormVisible:!1,book_list:[]}},actions:{SET_NAC_BOOL(){this.navBool=!this.navBool},get_book_list(){e(l.book_list,"get").then(o=>{this.book_list=o.data.data}).catch(o=>{console.log(o)})}}});function n(){return{home:s()}}export{n as u};
