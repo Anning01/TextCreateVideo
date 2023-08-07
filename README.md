@@ -7,6 +7,8 @@ Diffusion+MoviePy实现，项目整体设计为组件式结构，将第三方做
 
 <h2>更新信息</h2>
 使用教程视频：https://space.bilibili.com/50125441
+<br/>
+前端代码：https://github.com/Anning01/TextCreateVideo-FrontEnd
 
 [2023/08/07] 实现web启动页面，上传文本，一键生成，配置信息，失败重载使用缓存数据。
 
