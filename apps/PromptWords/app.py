@@ -36,15 +36,20 @@ class Main:
                 value = await self.tag_handle(value, tags)
             prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
             if not prompt:
-                if len(instance_class_list) >= 1:
+                if len(instance_class_list) > 1:
                     instance_class_list.pop(0)
                     prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
                     if not prompt:
                         print("------fastgpt和API2D都无法使用---------")
                         raise Exception("请检查代码")
+                elif len(instance_class_list) == 1:
+                    icl = instance_class_list.pop(0)
+                    if not prompt:
+                        print(f"-------{icl}--------")
+                        raise Exception(icl)
                 else:
                     print("------fastgpt和API2D都无法使用---------")
-                    raise Exception("请检查代码")
+                    raise Exception("请检查fastgpt和API2D配置")
             print(f"-----------生成第{index}段提示词-----------")
             data.append({
                 "index": index,
