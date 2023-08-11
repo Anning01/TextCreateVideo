@@ -8,11 +8,12 @@ import os
 from moviepy.editor import ImageSequenceClip, AudioFileClip, concatenate_videoclips
 import numpy as np
 
+from admin.models import SwitchType
 from config import file_path, project_path
 
 
 class Main:
-    def merge_video(self, picture_path_list: list, audio_path_list: list, name: str, is_web=False):
+    def merge_video(self, picture_path_list: list, audio_path_list: list, name: str, config=None, is_web=False):
         """
         :param picture_path_list: 图片路径列表
         :param audio_path_list: 音频路径列表
@@ -25,8 +26,20 @@ class Main:
         for index, value in enumerate(picture_path_list):
             audio_clip = AudioFileClip(audio_path_list[index])
             img_clip = ImageSequenceClip([picture_path_list[index]], audio_clip.duration)
-            img_clip = img_clip.set_position(('center', 'center')).fl(self.fl_up, apply_to=['mask']).set_duration(
-                audio_clip.duration)
+            if config:
+                if config.video_type == SwitchType.fades_and_out:
+                    if index != 0 and index != len(picture_path_list):
+                        img_clip = img_clip.set_position(('center', 'center')).set_duration(audio_clip.duration).fadeout(
+                            0.1).fadein(0.1)
+                    else:
+                        img_clip = img_clip.set_position(('center', 'center')).set_duration(audio_clip.duration)
+                elif config.video_type == SwitchType.up:
+                    img_clip = img_clip.set_position(('center', 'center')).fl(self.fl_up, apply_to=['mask']).set_duration(
+                        audio_clip.duration)
+                else:
+                    img_clip = img_clip.set_position(('center', 'center')).set_duration(audio_clip.duration)
+            else:
+                img_clip = img_clip.set_position(('center', 'center')).set_duration(audio_clip.duration)
             clip = img_clip.set_audio(audio_clip)
             clips.append(clip)
             print(f"-----------生成第{index}段视频-----------")

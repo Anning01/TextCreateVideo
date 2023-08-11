@@ -44,7 +44,7 @@ class Main:
             return data
         return await self.create_access_token()
 
-    async def text_to_audio(self, text: str, index: int, bookname=None):
+    async def text_to_audio(self, text: str, index: int, bookname=None, config=None):
         url = "https://tsn.baidu.com/text2audio"
         text = text.encode('utf8')
         FORMATS = {3: "mp3", 4: "pcm", 5: "pcm", 6: "wav"}
@@ -62,14 +62,14 @@ class Main:
             # 固定值zh。语言选择,目前只有中英文混合模式，填写固定值zh
             "lan": "zh",
             # 语速，取值0-15，默认为5中语速
-            "spd": 5,
+            "spd": config.spd if config else 5,
             # 音调，取值0-15，默认为5中语调
-            "pit": 5,
+            "pit": config.pit if config else 5,
             # 音量，基础音库取值0-9，精品音库取值0-15，默认为5中音量（取值为0时为音量最小值，并非为无声）
-            "vol": 5,
+            "vol": config.vol if config else 5,
             # (基础音库) 度小宇=1，度小美=0，度逍遥（基础）=3，度丫丫=4
             # (精品音库) 度逍遥（精品）=5003，度小鹿=5118，度博文=106，度小童=110，度小萌=111，度米朵=103，度小娇=5
-            "per": 5003,
+            "per": config.spd if config else 5003,
             # 3为mp3格式(默认)； 4为pcm-16k；5为pcm-8k；6为wav（内容同pcm-16k）; 注意aue=4或者6是语音识别要求的格式，但是音频内容不是语音识别要求的自然人发音，所以识别效果会受影响。
             "aue": FORMAT
         }

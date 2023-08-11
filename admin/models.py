@@ -7,7 +7,7 @@
 import enum
 from datetime import datetime
 from admin.databases import Base
-from sqlalchemy import String, Column, Integer, Text, DateTime, Enum
+from sqlalchemy import String, Column, Integer, Text, DateTime, Enum, SmallInteger
 
 
 # -----------------------------------------------------------------------------
@@ -52,8 +52,6 @@ class BookVoice(Base):
     index = Column(Integer, comment="语音索引")
     path = Column(String, comment="语音路径")
 
-    def __repr__(self):
-        return '<BookVoice: %s>' % self.name
 
 
 class BookPictures(Base):
@@ -63,11 +61,37 @@ class BookPictures(Base):
     index = Column(Integer, comment="图片索引")
     path = Column(String, comment="图片路径")
 
-    def __repr__(self):
-        return '<BookPictures: %s>' % self.name
-
 
 
 # -----------------------------------------------------------------------------
 #                    下面是优化图片效果和生成语音可调参数                      ------
 # -----------------------------------------------------------------------------
+
+
+class SwitchType(enum.Enum):
+    default = '默认样式'
+    up = "向上移动"
+    fades_and_out = "渐入渐出"
+
+
+class SceneTag(Base):
+    __tablename__ = 'scene_tag'
+    id = Column(Integer, primary_key=True, index=True)
+    book_id = Column(Integer, index=True)
+    trigger = Column(String, comment="触发词")
+    prompt = Column(String, comment="正向提示词")
+    negative = Column(String, comment="负向提示词")
+
+
+class SystemConfig(Base):
+    __tablename__ = 'system_config'
+    id = Column(Integer, primary_key=True, index=True)
+    video_type = Column(Enum(SwitchType), default=SwitchType.default, comment="视频切换类型")
+    spd = Column(SmallInteger, default=5, comment="语音语速控制")
+    pit = Column(SmallInteger, default=5, comment="语音音调控制")
+    vol = Column(SmallInteger, default=5, comment="语音音量控制")
+    per = Column(SmallInteger, default=5003, comment="语音音库控制")
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
