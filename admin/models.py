@@ -95,3 +95,11 @@ class SystemConfig(Base):
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
+
+class PromptTags(Base):
+    __tablename__ = 'prompt_tags'
+    id = Column(Integer, primary_key=True, index=True)
+    book_id = Column(Integer, index=True)
+    content = Column(String, comment="内容")
+    prompt = Column(String, comment="替换的正向提示词")
+    negative = Column(String, comment="替换的反向提示词")

@@ -79,3 +79,19 @@ class BookPicturesType(BaseModel):
 class BookClassType(BaseModel):
     id: int
     name: str
+
+
+class PromptTagsType(BaseModel):
+    id: Optional[int]
+    book_id: int
+    content: str
+    prompt: str
+    negative: str
+    name: Optional[str]
+
+
+class PromptTagsCreateType(BaseModel):
+    book_id: int
+    content: str
+    prompt: str
+    negative: str

@@ -18,7 +18,7 @@ class Main:
     # 不好用
     # prompt = "moe style, large deep clear eyes, straight long length white hair, medieval dress, exposed shoulders, focus on face, full body, glamorous body, legs, high angle, hyper angle pose, trending on pixiv, detailed, illustration, shadowverse, granblue fantasy, cygames, mushimaro, anime detailed line work, game character, comic cover, volumetric lighting, atmospheric lighting"
 
-    async def create_prompt_words(self, text_list: list, tags: dict):
+    async def create_prompt_words(self, text_list: list, tags_list: list | None):
         """
         生成英文提示词
         :return: [{prompt, negative, text, index},...]
@@ -31,9 +31,6 @@ class Main:
         if ForwardKey:
             instance_class_list.append(AM())
         for index, value in enumerate(text_list):
-            # 针对人物或者场景进行标签提示
-            if tags:
-                value = await self.tag_handle(value, tags)
             prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
             if not prompt:
                 if len(instance_class_list) > 1:
@@ -51,22 +48,28 @@ class Main:
                     print("------fastgpt和API2D都无法使用---------")
                     raise Exception("请检查fastgpt和API2D配置")
             print(f"-----------生成第{index}段提示词-----------")
+            negative = self.negative
+            # 针对人物或者场景进行标签提示
+            if tags_list:
+                p, n = await self.tag_handle(value, tags_list)
+                prompt = p + prompt
+                negative = n + negative
             data.append({
                 "index": index,
                 "text": value,
                 "prompt": self.prompt + prompt,
-                "negative": self.negative,
+                "negative": negative,
             })
         return data
 
-    async def tag_handle(self, text: str, tag_dict: dict):
+    async def tag_handle(self, text: str, tag_list: list):
         """
         用于处理用户的标签
         :return:
         """
-        for key, value in tag_dict.items():
-            index = text.find(key)
+        for i in tag_list:
+            index = text.find(i.content)
             if index > -1:
-                index += len(text)
-                text = text[:index] + value + text[index:]
-        return text
+                return i.prompt, i.negative
+        return '', ''
+

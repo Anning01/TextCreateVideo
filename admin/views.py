@@ -17,8 +17,10 @@ from pydantic import BaseModel
 from sqlalchemy import text, func, delete, update, insert
 
 from admin.databases import SessionLocal
-from admin.models import Book, BookSection, BookVoice, BookPictures, StatusEnum, SystemConfig, SceneTag, SwitchType
-from admin.type_annotation import Config, BookVoiceType, systemConfig, BookSectionType, BookPicturesType, BookClassType
+from admin.models import Book, BookSection, BookVoice, BookPictures, StatusEnum, SystemConfig, SceneTag, SwitchType, \
+    PromptTags
+from admin.type_annotation import Config, BookVoiceType, systemConfig, BookSectionType, BookPicturesType, BookClassType, \
+    PromptTagsType, PromptTagsCreateType
 from apps.GeneratePictures.app import Main as GPMain
 from apps.GenerateVideo.app import Main as GVMain
 from apps.PromptWords.app import Main as PMain
@@ -458,12 +460,65 @@ async def pictures_download(id_list: VoiceDownload, db: SessionLocal = Depends(g
 
 
 @router.get("/book/class", response_model=List[BookClassType])
-async def pictures_list(db: SessionLocal = Depends(get_db)):
+async def book_class(db: SessionLocal = Depends(get_db)):
     book_class = db.query(
         Book.id,
         Book.name,
     ).all()
     return book_class
+
+
+@router.get("/book/prompt_tags", response_model=List[PromptTagsType])
+async def prompt_tags_list(book_id: Optional[int] = None, db: SessionLocal = Depends(get_db)):
+    if book_id:
+        prompt_tags_list = db.query(
+            PromptTags.id,
+            PromptTags.book_id,
+            PromptTags.content,
+            PromptTags.prompt,
+            PromptTags.negative,
+            Book.name,
+        ).outerjoin(Book, PromptTags.book_id == Book.id).filter(PromptTags.book_id == book_id).all()
+    else:
+        prompt_tags_list = db.query(
+            PromptTags.id,
+            PromptTags.book_id,
+            PromptTags.content,
+            PromptTags.prompt,
+            PromptTags.negative,
+            Book.name,
+        ).outerjoin(Book, PromptTags.book_id == Book.id).all()
+    return prompt_tags_list
+
+
+@router.post("/book/prompt_tags")
+async def prompt_tags_create(prompt_tags: PromptTagsCreateType, db: SessionLocal = Depends(get_db)):
+    model = prompt_tags.model_dump()
+    model["prompt"] = model["prompt"].replace("，", ',') + "，"
+    model["negative"] = model["negative"].replace("，", ',') + "，"
+
+    stmt = insert(PromptTags).values(**model)
+    db.execute(stmt)
+    db.commit()
+    return success_data({}, "创建成功")
+
+
+@router.put("/book/prompt_tags/{id}")
+async def prompt_tags_update(id, prompt_tags: PromptTagsType, db: SessionLocal = Depends(get_db)):
+    model = prompt_tags.model_dump()
+    del model['name']
+    stmt = update(PromptTags).where(PromptTags.id == id).values(**model)
+    db.execute(stmt)
+    db.commit()
+    return success_data({}, "修改成功")
+
+
+@router.delete("/book/prompt_tags")
+async def prompt_tags_delete(prompt_tags: VoiceDownload, db: SessionLocal = Depends(get_db)):
+    stmt = delete(PromptTags).where(PromptTags.id.in_(prompt_tags.id_list))
+    db.execute(stmt)
+    db.commit()
+    return success_data({}, "删除成功")
 
 # @router.get("/book/voice-pictures")
 # async def voice_pictures(db: SessionLocal = Depends(get_db)):

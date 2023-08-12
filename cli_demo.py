@@ -19,7 +19,7 @@ if not all((client_id, client_secret, (all([apikey, appId]), ForwardKey), sd_url
     raise ValueError("Environment variables are missing.")
 
 
-async def main(bookname: str, tags: dict = None):
+async def main(bookname: str, tags: list | None = None):
     # 处理文本
     t = TMain()
     text_list = list(filter(None, await t.txt_handle(f'{bookname}.txt')))
