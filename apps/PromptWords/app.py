@@ -6,7 +6,8 @@
 # @file:app.py
 from SDK.ChatGPT.FastGPT.app import Main as FM
 from SDK.ChatGPT.API2D.app import Main as AM
-from config import apikey, appId, ForwardKey
+from SDK.ChatGPT.openAI.app import Main as OM
+from config import apikey, appId, ForwardKey, openAPI_KEY
 
 
 class Main:
@@ -26,27 +27,83 @@ class Main:
         # 包含着 坐标、英文提示词、英文反向提示词、中文文本 列表
         data = []
         instance_class_list = []
+        if openAPI_KEY:
+            instance_class_list.append(OM())
         if all([apikey, appId]):
             instance_class_list.append(FM())
         if ForwardKey:
             instance_class_list.append(AM())
         for index, value in enumerate(text_list):
-            prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
-            if not prompt:
-                if len(instance_class_list) > 1:
-                    instance_class_list.pop(0)
-                    prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
-                    if not prompt:
-                        print("------fastgpt和API2D都无法使用---------")
-                        raise Exception("请检查代码")
-                elif len(instance_class_list) == 1:
-                    icl = instance_class_list.pop(0)
-                    if not prompt:
-                        print(f"-------{icl}--------")
-                        raise Exception(icl)
-                else:
-                    print("------fastgpt和API2D都无法使用---------")
-                    raise Exception("请检查fastgpt和API2D配置")
+            # prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
+            # if not prompt:
+            #     if len(instance_class_list) > 1:
+            #         instance_class_list.pop(0)
+            #         prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
+            #         if not prompt:
+            #             print("------fastgpt和API2D都无法使用---------")
+            #             raise Exception("请检查代码")
+            #     elif len(instance_class_list) == 1:
+            #         icl = instance_class_list.pop(0)
+            #         if not prompt:
+            #             print(f"-------{icl}--------")
+            #             raise Exception(icl)
+            #     else:
+            #         print("------fastgpt和API2D都无法使用---------")
+            #         raise Exception("请检查fastgpt和API2D配置")
+            # print(f"-----------生成第{index}段提示词-----------")
+            # negative = self.negative
+            # # 针对人物或者场景进行标签提示
+            # if tags_list:
+            #     p, n = await self.tag_handle(value, tags_list)
+            #     prompt = p + prompt
+            #     negative = n + negative
+            # data.append({
+            #     "index": index,
+            #     "text": value,
+            #     "prompt": self.prompt + prompt,
+            #     "negative": negative,
+            # })
+            data.append(await self.failover(instance_class_list, index, value, tags_list))
+        return data
+
+    async def failover(self, instance_class_list, index, value, tags_list):
+        prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
+        if not prompt:
+            if len(instance_class_list) > 1:
+                icl = instance_class_list.pop(0)
+                print(f"-------{icl}--------")
+                return await self.failover(instance_class_list, index, value, tags_list)
+                # prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
+                # if not prompt:
+                #     print("------fastgpt和API2D都无法使用---------")
+                #     raise Exception("请检查代码")
+            elif len(instance_class_list) == 1:
+                icl = instance_class_list.pop(0)
+                print(f"-------{icl}--------")
+            raise Exception("chatgpt fastGPT API2D 全部无法使用, 请检查配置")
+        print(f"-----------生成第{index}段提示词-----------")
+        negative = self.negative
+        # 针对人物或者场景进行标签提示
+        if tags_list:
+            p, n = await self.tag_handle(value, tags_list)
+            prompt = p + prompt
+            negative = n + negative
+        return {
+                "index": index,
+                "text": value,
+                "prompt": self.prompt + prompt,
+                "negative": negative,
+            }
+
+    async def create_prompt_words2(self, text_list: list, tags_list: list | None):
+        """
+        生成英文提示词
+        :return: [{prompt, negative, text, index},...]
+        """
+        # 包含着 坐标、英文提示词、英文反向提示词、中文文本 列表
+        data = []
+        for index, value in enumerate(text_list):
+            prompt = await OM().prompt_generation_chatgpt(value)
             print(f"-----------生成第{index}段提示词-----------")
             negative = self.negative
             # 针对人物或者场景进行标签提示
@@ -57,7 +114,8 @@ class Main:
             data.append({
                 "index": index,
                 "text": value,
-                "prompt": self.prompt + prompt,
+                # "prompt": self.prompt + prompt,
+                "prompt": prompt,
                 "negative": negative,
             })
         return data

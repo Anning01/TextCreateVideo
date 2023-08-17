@@ -38,6 +38,7 @@ class Config(BaseModel):
     fastgpt_api_key: Optional[str] = ""
     api2d_forward_key: Optional[str] = ""
     sd_url: Optional[str] = ""
+    openAPI_KEY: Optional[str] = ""
     baidu_config: BaiduConfig
 
 

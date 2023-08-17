@@ -37,7 +37,7 @@ async def main(bookname: str, tags: list | None = None):
 
     # 生成图片
     gp = GPMain()
-    picture_path_list = gp.create_picture(object_list)
+    picture_path_list = await gp.create_picture(object_list)
     print(picture_path_list)
 
     # 合并视频

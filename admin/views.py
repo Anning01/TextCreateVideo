@@ -5,6 +5,7 @@
 # @time:2023/08/04 20:52
 # @file:views.py
 import asyncio
+import json
 import os
 import queue
 import shutil
@@ -12,13 +13,13 @@ import threading
 import zipfile
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Request
 from pydantic import BaseModel
 from sqlalchemy import text, func, delete, update, insert
 
 from admin.databases import SessionLocal
-from admin.models import Book, BookSection, BookVoice, BookPictures, StatusEnum, SystemConfig, SceneTag, SwitchType, \
-    PromptTags
+from admin.models import Book, BookSection, BookVoice, BookPictures, StatusEnum, SystemConfig, SwitchType, \
+    PromptTags, StableDiffusionConfig
 from admin.type_annotation import Config, BookVoiceType, systemConfig, BookSectionType, BookPicturesType, BookClassType, \
     PromptTagsType, PromptTagsCreateType
 from apps.GeneratePictures.app import Main as GPMain
@@ -26,7 +27,7 @@ from apps.GenerateVideo.app import Main as GVMain
 from apps.PromptWords.app import Main as PMain
 from apps.SpeechSynthesis.app import Main as SMain
 from apps.TextSiice.app import Main as TMain
-from config import file_path, project_path, client_id, client_secret, appId, apikey, ForwardKey, sd_url
+from config import file_path, project_path, client_id, client_secret, appId, apikey, ForwardKey, sd_url, openAPI_KEY
 
 router = APIRouter()
 
@@ -47,6 +48,10 @@ def success_data(data: dict | list, message: str = None):
 # 返回错误数据结涄
 def error_data(message: str, code: int = 0):
     return {"code": code, "message": message}
+
+
+class VoiceDownload(BaseModel):
+    id_list: list
 
 
 @router.get("/book")
@@ -72,6 +77,23 @@ async def book_list(db: SessionLocal = Depends(get_db)):
         res.append(data)
     return success_data(res)
     # return success_data(db.query(Book.name, func.strftime("%Y-%m-%d", Book.create_dt)).all())
+
+
+@router.delete("/book")
+async def book_delete(book_id_list: VoiceDownload, db: SessionLocal = Depends(get_db)):
+    stmt = delete(Book).where(Book.id.in_(book_id_list.id_list))
+    db.execute(stmt)
+    stmt = delete(BookSection).where(BookSection.book_id.in_(book_id_list.id_list))
+    db.execute(stmt)
+    stmt = delete(BookVoice).where(BookVoice.book_id.in_(book_id_list.id_list))
+    db.execute(stmt)
+    stmt = delete(BookPictures).where(BookPictures.book_id.in_(book_id_list.id_list))
+    db.execute(stmt)
+    stmt = delete(PromptTags).where(PromptTags.book_id.in_(book_id_list.id_list))
+    db.execute(stmt)
+
+    db.commit()
+    return success_data({}, "删除成功")
 
 
 def save_file(file: bytes, filename: str, path: str):
@@ -103,13 +125,18 @@ async def create_book(file: UploadFile = File(...), db: SessionLocal = Depends(g
 async def create_video(id, db: SessionLocal = Depends(get_db)):
     book = db.query(Book).get(id)
     config = db.query(SystemConfig).first()
-    scene_tag = db.query(SceneTag).filter(SceneTag.book_id == book.id).all()
+    scene_tag = db.query(PromptTags).filter(PromptTags.book_id == book.id).all()
+    sd_config = db.query(StableDiffusionConfig).first()
+    if sd_config:
+        sd_config = sd_config.config_json
+    else:
+        sd_config = json.loads(open('stable-diffusion-default.json', 'r', encoding='utf-8').read())
     book = db.query(Book).get(id)
     if book:
         path = str(project_path) + book.path
         book.status = StatusEnum.underway
         db.commit()
-        t = threading.Thread(target=CreateVideo().thread_func, args=[book, path, db, config, scene_tag])
+        t = threading.Thread(target=CreateVideo().thread_func, args=[book, path, db, config, scene_tag, sd_config])
         t.start()
         return success_data({}, message="视频生成任务启动成功！")
     return error_data("书不存在！")
@@ -117,10 +144,10 @@ async def create_video(id, db: SessionLocal = Depends(get_db)):
 
 class CreateVideo:
 
-    def thread_func(self, book, path, db, config, scene_tag):
+    def thread_func(self, book, path, db, config, scene_tag, sd_config):
         print("开启队列")
         q = queue.Queue()
-        t = threading.Thread(target=my_thread, args=[book, path, db, config, scene_tag, q])
+        t = threading.Thread(target=my_thread, args=[book, path, db, config, scene_tag, sd_config, q])
         print("开始子线程")
         t.start()
         t.join()
@@ -139,7 +166,7 @@ class CreateVideo:
             db.execute(stmt)
             db.commit()
 
-    async def main(self, book, path, db, config, scene_tag, q):
+    async def main(self, book, path, db, config, scene_tag, sd_config, q):
         """
         启动此方法，异步生成图片，语音，提示词
         :return:
@@ -161,7 +188,9 @@ class CreateVideo:
                     db.execute(stmt)
                     db.commit()
                 # 生成提示词任务
+                # scene_tag = db.merge(scene_tag)
                 object_list = await self.create_prompt_words(text_list, scene_tag)
+                print(object_list)
                 data_list = []
                 for i in object_list:
                     data_list.append(BookSection(
@@ -173,7 +202,6 @@ class CreateVideo:
                     ))
                 db.add_all(data_list)
                 db.commit()
-
             count = db.query(BookVoice).filter(BookVoice.book_id == book.id).with_entities(
                 func.count(BookVoice.id)).scalar()
             if count > 0 and count == len(text_list):
@@ -186,6 +214,7 @@ class CreateVideo:
                     # 执行更新操作
                     db.execute(stmt)
                     db.commit()
+                config = db.merge(config)
                 # 生成音频任务
                 audio_list = await self.text_to_audio(text_list, book.name, config)
                 audio_model_list = []
@@ -197,7 +226,6 @@ class CreateVideo:
                     ))
                 db.add_all(audio_model_list)
                 db.commit()
-
             count = db.query(BookPictures).filter(BookPictures.book_id == book.id).with_entities(
                 func.count(BookPictures.id)).scalar()
             if count > 0 and count == len(text_list):
@@ -211,7 +239,7 @@ class CreateVideo:
                     db.execute(stmt)
                     db.commit()
                 # 生成图片任务
-                picture_path_list = await self.create_picture(object_list, book.name)
+                picture_path_list = await self.create_picture(object_list, book.name, sd_config)
                 picture_model_list = []
                 for index, value in enumerate(picture_path_list):
                     picture_model_list.append(BookPictures(
@@ -221,6 +249,7 @@ class CreateVideo:
                     ))
                 db.add_all(picture_model_list)
                 db.commit()
+            config = db.merge(config)
             # 视频任务
             video_path = await self.create_video(picture_path_list, audio_list, book.name, config)
             book.video_path = video_path
@@ -258,16 +287,17 @@ class CreateVideo:
         """
         p = PMain()
         object_list = await p.create_prompt_words(text_list, tags)
+        # object_list = await p.create_prompt_words2(text_list, tags)
 
         return object_list
 
-    async def create_picture(self, obj_list, book_name):
+    async def create_picture(self, obj_list, book_name, sd_config):
         """
         生成图片
         :return:
         """
         gp = GPMain()
-        return gp.create_picture(obj_list, book_name)
+        return await gp.create_picture(obj_list, book_name, sd_config)
 
     async def create_video(self, picture_path_list, audio_list, book_name, config):
         """
@@ -279,8 +309,8 @@ class CreateVideo:
         return gv_path
 
 
-def my_thread(book, path, db, config, scene_tag, q):
-    asyncio.run(CreateVideo().main(book, path, db, config, scene_tag, q))
+def my_thread(book, path, db, config, scene_tag, sd_config, q):
+    asyncio.run(CreateVideo().main(book, path, db, config, scene_tag, sd_config, q))
 
 
 @router.get("/config")
@@ -303,6 +333,7 @@ async def config(db: SessionLocal = Depends(get_db)):
         fastgpt_appid=appId,
         fastgpt_api_key=apikey,
         api2d_forward_key=ForwardKey,
+        openAPI_KEY=openAPI_KEY,
         sd_url=sd_url.replace("http://", "").replace("/sdapi/v1/txt2img", ""),
         baidu_config=baidu_config
     )
@@ -312,7 +343,7 @@ async def config(db: SessionLocal = Depends(get_db)):
 @router.post("/config")
 async def update_config(config: Config, db: SessionLocal = Depends(get_db)):
     env = os.path.join(project_path, '.env')
-    env_text = f"client_id='{config.baidu_api_key}'\nclient_secret='{config.baidu_secret_key}'\napikey='{config.fastgpt_api_key}'\nappId='{config.fastgpt_appid}'\nForwardKey='{config.api2d_forward_key}'\nsd_url='http://{config.sd_url}/sdapi/v1/txt2img'"
+    env_text = f"client_id='{config.baidu_api_key}'\nclient_secret='{config.baidu_secret_key}'\napikey='{config.fastgpt_api_key}'\nappId='{config.fastgpt_appid}'\nForwardKey='{config.api2d_forward_key}'\nopenAPI_KEY='{config.openAPI_KEY}'\nsd_url='http://{config.sd_url}/sdapi/v1/txt2img'"
     with open(env, 'w') as f:
         f.write(env_text)
     baidu_config = db.query(SystemConfig).first()
@@ -352,17 +383,28 @@ async def update_config(config: systemConfig, db: SessionLocal = Depends(get_db)
 
 
 @router.get("/book/section", response_model=List[BookSectionType])
-async def section_list(db: SessionLocal = Depends(get_db)):
-    sections = db.query(
-        BookSection.id,
-        BookSection.book_id,
-        BookSection.paragraph,
-        BookSection.index,
-        BookSection.prompt,
-        BookSection.negative,
-        Book.name,
-    ).outerjoin(Book, BookSection.book_id == Book.id).all()
+async def section_list(book_id: Optional[int] = None, db: SessionLocal = Depends(get_db)):
 
+    if book_id:
+        sections = db.query(
+            BookSection.id,
+            BookSection.book_id,
+            BookSection.paragraph,
+            BookSection.index,
+            BookSection.prompt,
+            BookSection.negative,
+            Book.name,
+        ).outerjoin(Book, BookSection.book_id == Book.id).filter(BookSection.book_id == book_id).all()
+    else:
+        sections = db.query(
+            BookSection.id,
+            BookSection.book_id,
+            BookSection.paragraph,
+            BookSection.index,
+            BookSection.prompt,
+            BookSection.negative,
+            Book.name,
+        ).outerjoin(Book, BookSection.book_id == Book.id).all()
     return sections
 
 
@@ -374,6 +416,15 @@ async def update_section(id, book_section: BookSectionType, db: SessionLocal = D
     db.execute(stmt)
     db.commit()
     return book_section.model_dump()
+
+
+@router.delete("/book/section")
+async def delete_section(book_id_list: VoiceDownload, db: SessionLocal = Depends(get_db)):
+    stmt = delete(BookSection).where(BookSection.id.in_(book_id_list.id_list))
+    db.execute(stmt)
+
+    db.commit()
+    return success_data({}, "删除成功")
 
 
 @router.get("/book/voice", response_model=List[BookVoiceType])
@@ -396,10 +447,6 @@ async def voice_list(book_id: Optional[int] = None, db: SessionLocal = Depends(g
         ).outerjoin(Book, BookVoice.book_id == Book.id).all()
 
     return voices
-
-
-class VoiceDownload(BaseModel):
-    id_list: list
 
 
 @router.post("/book/voice/download")
@@ -457,6 +504,56 @@ async def pictures_download(id_list: VoiceDownload, db: SessionLocal = Depends(g
             zipObj.write(i)
         zipObj.close()
     return {"url": zip_file.replace(str(project_path), '')}
+
+
+@router.delete("/book/pictures")
+async def pictures_delete(book_id_list: VoiceDownload, db: SessionLocal = Depends(get_db)):
+    stmt = delete(BookPictures).where(BookPictures.id.in_(book_id_list.id_list))
+    db.execute(stmt)
+    db.commit()
+    return success_data({}, "删除成功")
+
+
+def run_async(func, *args):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(func(*args))
+    loop.close()
+
+
+async def redraw_photo(object_list, book_name, pictures_id, pictures, db, sd_config):
+    picture_path_list = await CreateVideo().create_picture(object_list, book_name, sd_config)
+    picture_model_list = []
+    # 删除旧图片
+    stmt = delete(BookPictures).where(BookPictures.id == pictures_id)
+    db.execute(stmt)
+    db.commit()
+    # 添加新图片
+    for index, value in enumerate(picture_path_list):
+        picture_model_list.append(BookPictures(
+            book_id=pictures.book_id,
+            index=index,
+            path=value
+        ))
+    db.add_all(picture_model_list)
+    db.commit()
+
+
+@router.get("/book/pictures/redraw")
+async def pictures_delete(pictures_id: int, db: SessionLocal = Depends(get_db)):
+    pictures = db.query(BookPictures, Book.name).outerjoin(Book, BookPictures.book_id == Book.id).filter(BookPictures.id == pictures_id).first()
+    pictures, book_name = pictures[0], pictures[1]
+    book_section = db.query(BookSection).filter(BookSection.book_id == pictures.book_id, BookSection.index == pictures.index).first()
+    if not book_section:
+        return error_data("提示词已被删除")
+    object_list = [{"prompt": book_section.prompt, "negative": book_section.negative, "index": book_section.index}]
+    sd_config = db.query(StableDiffusionConfig).first()
+    if sd_config:
+        sd_config = sd_config.config_json
+    else:
+        sd_config = json.loads(open('stable-diffusion-default.json', 'r', encoding='utf-8').read())
+    threading.Thread(target=run_async, args=[redraw_photo, object_list, book_name, pictures_id, pictures, db, sd_config]).start()
+    return success_data({}, "开始重绘，请稍后")
 
 
 @router.get("/book/class", response_model=List[BookClassType])
@@ -519,6 +616,42 @@ async def prompt_tags_delete(prompt_tags: VoiceDownload, db: SessionLocal = Depe
     db.execute(stmt)
     db.commit()
     return success_data({}, "删除成功")
+
+
+@router.get("/stable-diffusion")
+async def stable_diffusion_list(db: SessionLocal = Depends(get_db)):
+    stable_diffusion = db.query(StableDiffusionConfig).first()
+    if stable_diffusion:
+        stable_diffusion = stable_diffusion.config_json
+    else:
+        stable_diffusion = json.loads(open('stable-diffusion-default.json', 'r', encoding='utf-8').read())
+    return success_data(stable_diffusion, "获取成功")
+
+
+@router.post("/stable-diffusion")
+async def stable_diffusion_reset(db: SessionLocal = Depends(get_db)):
+    stable_diffusion = db.query(StableDiffusionConfig).first()
+    if stable_diffusion:
+        stable_diffusion.config_json = json.loads(open('stable-diffusion-default.json', 'r', encoding='utf-8').read())
+        db.commit()
+    return success_data({}, "重置成功")
+
+
+@router.put("/stable-diffusion")
+async def stable_diffusion_update(request: Request, db: SessionLocal = Depends(get_db)):
+    data = await request.body()
+    text = data.decode('utf-8')
+    obj = json.loads(text)
+    stable_diffusion = db.query(StableDiffusionConfig).first()
+    if stable_diffusion:
+        stmt = update(StableDiffusionConfig).where(StableDiffusionConfig.id == stable_diffusion.id).values(config_json=obj)
+    else:
+        stmt = insert(StableDiffusionConfig).values(config_json=obj)
+    db.execute(stmt)
+    db.commit()
+    return success_data({}, "修改成功")
+
+
 
 # @router.get("/book/voice-pictures")
 # async def voice_pictures(db: SessionLocal = Depends(get_db)):

@@ -7,7 +7,7 @@
 import enum
 from datetime import datetime
 from admin.databases import Base
-from sqlalchemy import String, Column, Integer, Text, DateTime, Enum, SmallInteger
+from sqlalchemy import String, Column, Integer, Text, DateTime, Enum, SmallInteger, DECIMAL, Boolean, ForeignKey, JSON
 
 
 # -----------------------------------------------------------------------------
@@ -53,14 +53,12 @@ class BookVoice(Base):
     path = Column(String, comment="语音路径")
 
 
-
 class BookPictures(Base):
     __tablename__ = 'book_pictures'
     id = Column(Integer, primary_key=True, index=True)
     book_id = Column(Integer, index=True)
     index = Column(Integer, comment="图片索引")
     path = Column(String, comment="图片路径")
-
 
 
 # -----------------------------------------------------------------------------
@@ -72,15 +70,6 @@ class SwitchType(enum.Enum):
     default = '默认样式'
     up = "向上移动"
     fades_and_out = "渐入渐出"
-
-
-class SceneTag(Base):
-    __tablename__ = 'scene_tag'
-    id = Column(Integer, primary_key=True, index=True)
-    book_id = Column(Integer, index=True)
-    trigger = Column(String, comment="触发词")
-    prompt = Column(String, comment="正向提示词")
-    negative = Column(String, comment="负向提示词")
 
 
 class SystemConfig(Base):
@@ -103,3 +92,41 @@ class PromptTags(Base):
     content = Column(String, comment="内容")
     prompt = Column(String, comment="替换的正向提示词")
     negative = Column(String, comment="替换的反向提示词")
+
+
+"""
+{
+    "//": "高分辨率放大，true=启用，false=关闭",
+    "enable_hr": true,
+    "//": "重绘幅度",
+    "denoising_strength": 0.4,
+    "//": "图片宽度",
+    "firstphase_width": 960,
+    "//": "图片高度",
+    "firstphase_height": 540,
+    "//": "图片高分辨率放大倍数",
+    "hr_scale": 2,
+    "//": "高分辨率放大渲染器",
+    "hr_upscaler": "R-ESRGAN 4x+ Anime6B",
+    "//": "高分辨率放大迭代次数",
+    "hr_second_pass_steps": 10,
+    "//": "绘图渲染器",
+    "sampler_name": "DPM adaptive",
+    "//": "绘图数量",
+    "batch_size": 1,
+    "//": "绘图迭代次数",
+    "steps": 150,
+    "//": "引导词关联性",
+    "cfg_scale": 7,
+    "//": "面部修复，true=启用，false=关闭",
+    "restore_faces": false,
+    "//": "负面提示词",
+    "negative_prompt": "badhandv4,ng_deepnegative_v1_64t,worst quality,low quality,normal quality,lowers,monochrome,grayscales,skin spots,acnes,skin blemishes,age spot,6 more fingers on one hand,deformity,bad legs,error legs,bad feet,malformed limbs,extra limbs,ugly,poorly drawn hands,poorly drawn feet,poorly drawn face,text,mutilated,extra fingers,mutated hands,mutation,bad anatomy,cloned face,disfigured,fused fingers"
+  }
+"""
+
+
+class StableDiffusionConfig(Base):
+    __tablename__ = 'stable_diffusion_config'
+    id = Column(Integer, primary_key=True, index=True)
+    config_json = Column(JSON, comment="json配置")

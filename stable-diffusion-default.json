@@ -1,0 +1,268 @@
+[
+  {
+    "description": "推理步数",
+    "key": "steps",
+    "value": 10,
+    "type": "int"
+  },
+  {
+    "description": "引导词关联性",
+    "key": "cfg_scale",
+    "value": 7,
+    "type": "int"
+  },
+  {
+    "description": "第一阶段图像宽度",
+    "key": "firstphase_width",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "第一阶段图像高度",
+    "key": "firstphase_height",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "生成图片宽度",
+    "key": "width",
+    "value": 512,
+    "type": "int"
+  },
+  {
+    "description": "生成图片高度",
+    "key": "height",
+    "value": 512,
+    "type": "int"
+  },
+  {
+    "description": "负向提示",
+    "key": "negative_prompt",
+    "value": "badhandv4,ng_deepnegative_v1_64t,worst quality,low quality,normal quality,lowers,monochrome,grayscales,skin spots,acnes,skin blemishes,age spot,6 more fingers on one hand,deformity,bad legs,error legs,bad feet,malformed limbs,extra limbs,ugly,poorly drawn hands,poorly drawn feet,poorly drawn face,text,mutilated,extra fingers,mutated hands,mutation,bad anatomy,cloned face,disfigured,fused fingers",
+    "type": "str"
+  },
+  {
+    "description": "是否启用高分辨率上采样,可选true/false",
+    "key": "enable_hr",
+    "value": false,
+    "type": "bool"
+  },
+  {
+    "description": "去噪强度,一般0",
+    "key": "denoising_strength",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "超分辨率上采样缩放比例,如2,4",
+    "key": "hr_scale",
+    "value": 2,
+    "type": "int"
+  },
+  {
+    "description": "上采样器选择,如RealESRGAN_x2plus",
+    "key": "hr_upscaler",
+    "value": "string",
+    "type": "str"
+  },
+  {
+    "description": "二次通过步数",
+    "key": "hr_second_pass_steps",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "X方向上采样大小",
+    "key": "hr_resize_x",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "Y方向上采样大小",
+    "key": "hr_resize_y",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "上采样采样器选择",
+    "key": "hr_sampler_name",
+    "value": "string",
+    "type": "str"
+  },
+  {
+    "description": "上采样提示文字",
+    "key": "hr_prompt",
+    "value": "",
+    "type": "str"
+  },
+  {
+    "description": "上采样负向提示",
+    "key": "hr_negative_prompt",
+    "value": "",
+    "type": "str"
+  },
+  {
+    "description": "风格列表",
+    "key": "styles",
+    "value": [
+      "string"
+    ],
+    "type": "list"
+  },
+  {
+    "description": "随机种子",
+    "key": "seed",
+    "value": -1,
+    "type": "int"
+  },
+  {
+    "description": "子种子",
+    "key": "subseed",
+    "value": -1,
+    "type": "int"
+  },
+  {
+    "description": "子种子强度",
+    "key": "subseed_strength",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "采样器选择",
+    "key": "sampler_name",
+    "value": "DPM adaptive",
+    "type": "str"
+  },
+  {
+    "description": "批量生成大小",
+    "key": "batch_size",
+    "value": 1,
+    "type": "int"
+  },
+  {
+    "description": "迭代次数",
+    "key": "n_iter",
+    "value": 1,
+    "type": "int"
+  },
+  {
+    "description": "是否保留人脸",
+    "key": "restore_faces",
+    "value": false,
+    "type": "bool"
+  },
+  {
+    "description": "是否平铺",
+    "key": "tiling",
+    "value": false,
+    "type": "bool"
+  },
+  {
+    "description": "采样器索引",
+    "key": "sampler_index",
+    "value": "Euler",
+    "type": "str"
+  },
+  {
+    "description": "脚本名称",
+    "key": "script_name",
+    "value": "",
+    "type": "str"
+  },
+  {
+    "description": "是否发送图片",
+    "key": "send_images",
+    "value": true,
+    "type": "bool"
+  },
+  {
+    "description": "是否保存图片",
+    "key": "save_images",
+    "value": false,
+    "type": "bool"
+  },
+  {
+    "description": "从指定高度resize随机种子图像",
+    "key": "seed_resize_from_h",
+    "value": -1,
+    "type": "int"
+  },
+  {
+    "description": "从指定宽度resize随机种子图像",
+    "key": "seed_resize_from_w",
+    "value": -1,
+    "type": "int"
+  },
+  {
+    "description": "是否不保存采样结果图片",
+    "key": "do_not_save_samples",
+    "value": false,
+    "type": "bool"
+  },
+  {
+    "description": "是否不保存网格图片",
+    "key": "do_not_save_grid",
+    "value": false,
+    "type": "bool"
+  },
+  {
+    "description": "用于调整diffusion过程中添加噪声的程度",
+    "key": "eta",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "无条件引导下潜在代码s的最小值",
+    "key": "s_min_uncond",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "控制潜在代码s的变化量",
+    "key": "s_churn",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "随时间变化的潜在代码s的最大值",
+    "key": "s_tmax",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "潜在代码s的最小值",
+    "key": "s_tmin",
+    "value": 0,
+    "type": "int"
+  },
+  {
+    "description": "控制加入到diffusion过程的噪声量",
+    "key": "s_noise",
+    "value": 1,
+    "type": "int"
+  },
+  {
+    "description": "在覆盖设置后是否恢复原设置",
+    "key": "override_settings_restore_afterwards",
+    "value": true,
+    "type": "bool"
+  },
+  {
+    "description": "传递给脚本的额外参数列表",
+    "key": "script_args",
+    "value": [],
+    "type": "list"
+  },
+  {
+    "description": "覆盖设置",
+    "key": "override_settings",
+    "value": {},
+    "type": "dict"
+  },
+  {
+    "description": "始终执行的脚本设置",
+    "key": "alwayson_scripts",
+    "value": {},
+    "type": "dict"
+  }
+]
