@@ -337,7 +337,7 @@ async def config(db: SessionLocal = Depends(get_db)):
         sd_url=sd_url.replace("http://", "").replace("/sdapi/v1/txt2img", ""),
         baidu_config=baidu_config
     )
-    return success_data(config.model_dump())
+    return success_data(config)
 
 
 @router.post("/config")
