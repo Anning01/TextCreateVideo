@@ -136,8 +136,7 @@ async def create_video(id, db: SessionLocal = Depends(get_db)):
         path = str(project_path) + book.path
         book.status = StatusEnum.underway
         db.commit()
-        t = threading.Thread(target=CreateVideo().thread_func, args=[book, path, db, config, scene_tag, sd_config])
-        t.start()
+        threading.Thread(target=CreateVideo().thread_func, args=[book, path, db, config, scene_tag, sd_config]).start()
         return success_data({}, message="视频生成任务启动成功！")
     return error_data("书不存在！")
 
@@ -145,118 +144,132 @@ async def create_video(id, db: SessionLocal = Depends(get_db)):
 class CreateVideo:
 
     def thread_func(self, book, path, db, config, scene_tag, sd_config):
-        print("开启队列")
-        q = queue.Queue()
-        t = threading.Thread(target=my_thread, args=[book, path, db, config, scene_tag, sd_config, q])
-        print("开始子线程")
-        t.start()
-        t.join()
-        # 修改状态
-        if not q.empty():
-            error = q.get()
-            if error:
-                status = StatusEnum.failure
-                fail_info = str(error)
-            else:
-                status = StatusEnum.complete
-                fail_info = ''
-            book = db.merge(book)
+        status = StatusEnum.complete
+        fail_info = ''
+        try:
+            asyncio.run(self.main(book, path, db, config, scene_tag, sd_config))
+        except Exception as error:
+            status = StatusEnum.failure
+            fail_info = str(error)
+        finally:
+            # book = db.merge(book)
             stmt = update(Book).where(Book.id == book.id).values(fail_info=fail_info, status=status)
             # 执行更新操作
             db.execute(stmt)
             db.commit()
 
-    async def main(self, book, path, db, config, scene_tag, sd_config, q):
+        # print("开启队列")
+        # q = queue.Queue()
+        # t = threading.Thread(target=my_thread, args=[book, path, db, config, scene_tag, sd_config, q])
+        # print("开始子线程")
+        # t.start()
+        # t.join()
+        # 修改状态
+        # if not q.empty():
+        #     error = q.get()
+        #     if error:
+        #         status = StatusEnum.failure
+        #         fail_info = str(error)
+        #     else:
+        #         status = StatusEnum.complete
+        #         fail_info = ''
+        #     book = db.merge(book)
+        #     stmt = update(Book).where(Book.id == book.id).values(fail_info=fail_info, status=status)
+        #     # 执行更新操作
+        #     db.execute(stmt)
+        #     db.commit()
+
+    async def main(self, book, path, db, config, scene_tag, sd_config):
         """
         启动此方法，异步生成图片，语音，提示词
         :return:
         """
-        try:
-            # 创建分割任务
-            text_list = await self.txt_handle(path)
-            book = db.merge(book)
-            count = db.query(BookSection).filter(BookSection.book_id == book.id).with_entities(
-                func.count(BookSection.id)).scalar()
-            if count > 0 and count == len(text_list):
-                book_section = db.query(BookSection).filter(BookSection.book_id == book.id).all()
-                object_list = [{"prompt": i.prompt, "negative": i.negative, "index": i.index} for i in book_section]
-            else:
-                if count > 0 and count != len(text_list):
-                    # 构建查询对象
-                    stmt = delete(BookSection).where(BookSection.book_id == book.id)
-                    # 执行更新操作
-                    db.execute(stmt)
-                    db.commit()
-                # 生成提示词任务
-                # scene_tag = db.merge(scene_tag)
-                object_list = await self.create_prompt_words(text_list, scene_tag)
-                print(object_list)
-                data_list = []
-                for i in object_list:
-                    data_list.append(BookSection(
-                        book_id=book.id,
-                        paragraph=i['text'],
-                        index=i['index'],
-                        prompt=i['prompt'],
-                        negative=i['negative'],
-                    ))
-                db.add_all(data_list)
+        # try:
+        # 创建分割任务
+        text_list = await self.txt_handle(path)
+        book = db.merge(book)
+        count = db.query(BookSection).filter(BookSection.book_id == book.id).with_entities(
+            func.count(BookSection.id)).scalar()
+        if count > 0 and count == len(text_list):
+            book_section = db.query(BookSection).filter(BookSection.book_id == book.id).all()
+            object_list = [{"prompt": i.prompt, "negative": i.negative, "index": i.index} for i in book_section]
+        else:
+            if count > 0 and count != len(text_list):
+                # 构建查询对象
+                stmt = delete(BookSection).where(BookSection.book_id == book.id)
+                # 执行更新操作
+                db.execute(stmt)
                 db.commit()
-            count = db.query(BookVoice).filter(BookVoice.book_id == book.id).with_entities(
-                func.count(BookVoice.id)).scalar()
-            if count > 0 and count == len(text_list):
-                book_voice = db.query(BookVoice).filter(BookVoice.book_id == book.id).all()
-                audio_list = [i.path for i in book_voice]
-            else:
-                if count > 0 and count != len(text_list):
-                    # 构建查询对象
-                    stmt = delete(BookVoice).where(BookVoice.book_id == book.id)
-                    # 执行更新操作
-                    db.execute(stmt)
-                    db.commit()
-                config = db.merge(config)
-                # 生成音频任务
-                audio_list = await self.text_to_audio(text_list, book.name, config)
-                audio_model_list = []
-                for index, value in enumerate(audio_list):
-                    audio_model_list.append(BookVoice(
-                        book_id=book.id,
-                        index=index,
-                        path=value
-                    ))
-                db.add_all(audio_model_list)
-                db.commit()
-            count = db.query(BookPictures).filter(BookPictures.book_id == book.id).with_entities(
-                func.count(BookPictures.id)).scalar()
-            if count > 0 and count == len(text_list):
-                book_pictures = db.query(BookPictures).filter(BookPictures.book_id == book.id).all()
-                picture_path_list = [i.path for i in book_pictures]
-            else:
-                if count > 0 and count != len(text_list):
-                    # 构建查询对象
-                    stmt = delete(BookPictures).where(BookPictures.book_id == book.id)
-                    # 执行更新操作
-                    db.execute(stmt)
-                    db.commit()
-                # 生成图片任务
-                picture_path_list = await self.create_picture(object_list, book.name, sd_config)
-                picture_model_list = []
-                for index, value in enumerate(picture_path_list):
-                    picture_model_list.append(BookPictures(
-                        book_id=book.id,
-                        index=index,
-                        path=value
-                    ))
-                db.add_all(picture_model_list)
+            # 生成提示词任务
+            # scene_tag = db.merge(scene_tag)
+            object_list = await self.create_prompt_words(text_list, scene_tag)
+            print(object_list)
+            data_list = []
+            for i in object_list:
+                data_list.append(BookSection(
+                    book_id=book.id,
+                    paragraph=i['text'],
+                    index=i['index'],
+                    prompt=i['prompt'],
+                    negative=i['negative'],
+                ))
+            db.add_all(data_list)
+            db.commit()
+        count = db.query(BookVoice).filter(BookVoice.book_id == book.id).with_entities(
+            func.count(BookVoice.id)).scalar()
+        if count > 0 and count == len(text_list):
+            book_voice = db.query(BookVoice).filter(BookVoice.book_id == book.id).all()
+            audio_list = [i.path for i in book_voice]
+        else:
+            if count > 0 and count != len(text_list):
+                # 构建查询对象
+                stmt = delete(BookVoice).where(BookVoice.book_id == book.id)
+                # 执行更新操作
+                db.execute(stmt)
                 db.commit()
             config = db.merge(config)
-            # 视频任务
-            video_path = await self.create_video(picture_path_list, audio_list, book.name, config)
-            book.video_path = video_path
-            book.status = StatusEnum.complete
+            # 生成音频任务
+            audio_list = await self.text_to_audio(text_list, book.name, config)
+            audio_model_list = []
+            for index, value in enumerate(audio_list):
+                audio_model_list.append(BookVoice(
+                    book_id=book.id,
+                    index=index,
+                    path=value
+                ))
+            db.add_all(audio_model_list)
             db.commit()
-        except Exception as e:
-            q.put(e)
+        count = db.query(BookPictures).filter(BookPictures.book_id == book.id).with_entities(
+            func.count(BookPictures.id)).scalar()
+        if count > 0 and count == len(text_list):
+            book_pictures = db.query(BookPictures).filter(BookPictures.book_id == book.id).all()
+            picture_path_list = [i.path for i in book_pictures]
+        else:
+            if count > 0 and count != len(text_list):
+                # 构建查询对象
+                stmt = delete(BookPictures).where(BookPictures.book_id == book.id)
+                # 执行更新操作
+                db.execute(stmt)
+                db.commit()
+            # 生成图片任务
+            picture_path_list = await self.create_picture(object_list, book.name, sd_config)
+            picture_model_list = []
+            for index, value in enumerate(picture_path_list):
+                picture_model_list.append(BookPictures(
+                    book_id=book.id,
+                    index=index,
+                    path=value
+                ))
+            db.add_all(picture_model_list)
+            db.commit()
+        config = db.merge(config)
+        # 视频任务
+        video_path = await self.create_video(picture_path_list, audio_list, book.name, config)
+        book.video_path = video_path
+        book.status = StatusEnum.complete
+        db.commit()
+        # except Exception as e:
+        #     q.put(e)
 
     async def txt_handle(self, path):
         """
@@ -309,8 +322,8 @@ class CreateVideo:
         return gv_path
 
 
-def my_thread(book, path, db, config, scene_tag, sd_config, q):
-    asyncio.run(CreateVideo().main(book, path, db, config, scene_tag, sd_config, q))
+# def my_thread(book, path, db, config, scene_tag, sd_config, q):
+#     asyncio.run(CreateVideo().main(book, path, db, config, scene_tag, sd_config, q))
 
 
 @router.get("/config")
@@ -384,7 +397,6 @@ async def update_config(config: systemConfig, db: SessionLocal = Depends(get_db)
 
 @router.get("/book/section", response_model=List[BookSectionType])
 async def section_list(book_id: Optional[int] = None, db: SessionLocal = Depends(get_db)):
-
     if book_id:
         sections = db.query(
             BookSection.id,
@@ -452,7 +464,7 @@ async def voice_list(book_id: Optional[int] = None, db: SessionLocal = Depends(g
 @router.post("/book/voice/download")
 async def voice_download(id_list: VoiceDownload, db: SessionLocal = Depends(get_db)):
     voices = db.query(BookVoice).filter(BookVoice.id.in_(id_list.id_list)).all()
-    voice_path_list = ['.'+i.path for i in voices]
+    voice_path_list = ['.' + i.path for i in voices]
     zip_file = os.path.join(project_path, 'media')
     zip_file = os.path.join(zip_file, 'zip')
     if os.path.exists(zip_file):
@@ -491,7 +503,7 @@ async def pictures_list(book_id: Optional[int] = None, db: SessionLocal = Depend
 @router.post("/book/pictures/download")
 async def pictures_download(id_list: VoiceDownload, db: SessionLocal = Depends(get_db)):
     pictures = db.query(BookPictures).filter(BookPictures.id.in_(id_list.id_list)).all()
-    pictures_path_list = ['.'+i.path for i in pictures]
+    pictures_path_list = ['.' + i.path for i in pictures]
     zip_file = os.path.join(project_path, 'media')
     zip_file = os.path.join(zip_file, 'zip')
     if os.path.exists(zip_file):
@@ -541,9 +553,11 @@ async def redraw_photo(object_list, book_name, pictures_id, pictures, db, sd_con
 
 @router.get("/book/pictures/redraw")
 async def pictures_delete(pictures_id: int, db: SessionLocal = Depends(get_db)):
-    pictures = db.query(BookPictures, Book.name).outerjoin(Book, BookPictures.book_id == Book.id).filter(BookPictures.id == pictures_id).first()
+    pictures = db.query(BookPictures, Book.name).outerjoin(Book, BookPictures.book_id == Book.id).filter(
+        BookPictures.id == pictures_id).first()
     pictures, book_name = pictures[0], pictures[1]
-    book_section = db.query(BookSection).filter(BookSection.book_id == pictures.book_id, BookSection.index == pictures.index).first()
+    book_section = db.query(BookSection).filter(BookSection.book_id == pictures.book_id,
+                                                BookSection.index == pictures.index).first()
     if not book_section:
         return error_data("提示词已被删除")
     object_list = [{"prompt": book_section.prompt, "negative": book_section.negative, "index": book_section.index}]
@@ -552,7 +566,8 @@ async def pictures_delete(pictures_id: int, db: SessionLocal = Depends(get_db)):
         sd_config = sd_config.config_json
     else:
         sd_config = json.loads(open('stable-diffusion-default.json', 'r', encoding='utf-8').read())
-    threading.Thread(target=run_async, args=[redraw_photo, object_list, book_name, pictures_id, pictures, db, sd_config]).start()
+    threading.Thread(target=run_async,
+                     args=[redraw_photo, object_list, book_name, pictures_id, pictures, db, sd_config]).start()
     return success_data({}, "开始重绘，请稍后")
 
 
@@ -644,14 +659,13 @@ async def stable_diffusion_update(request: Request, db: SessionLocal = Depends(g
     obj = json.loads(text)
     stable_diffusion = db.query(StableDiffusionConfig).first()
     if stable_diffusion:
-        stmt = update(StableDiffusionConfig).where(StableDiffusionConfig.id == stable_diffusion.id).values(config_json=obj)
+        stmt = update(StableDiffusionConfig).where(StableDiffusionConfig.id == stable_diffusion.id).values(
+            config_json=obj)
     else:
         stmt = insert(StableDiffusionConfig).values(config_json=obj)
     db.execute(stmt)
     db.commit()
     return success_data({}, "修改成功")
-
-
 
 # @router.get("/book/voice-pictures")
 # async def voice_pictures(db: SessionLocal = Depends(get_db)):
