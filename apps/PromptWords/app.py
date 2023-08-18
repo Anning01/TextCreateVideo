@@ -33,36 +33,9 @@ class Main:
             instance_class_list.append(FM())
         if ForwardKey:
             instance_class_list.append(AM())
+        if not instance_class_list:
+            raise Exception("chatgpt fastGPT API2D 全部无法使用, 请检查配置")
         for index, value in enumerate(text_list):
-            # prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
-            # if not prompt:
-            #     if len(instance_class_list) > 1:
-            #         instance_class_list.pop(0)
-            #         prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
-            #         if not prompt:
-            #             print("------fastgpt和API2D都无法使用---------")
-            #             raise Exception("请检查代码")
-            #     elif len(instance_class_list) == 1:
-            #         icl = instance_class_list.pop(0)
-            #         if not prompt:
-            #             print(f"-------{icl}--------")
-            #             raise Exception(icl)
-            #     else:
-            #         print("------fastgpt和API2D都无法使用---------")
-            #         raise Exception("请检查fastgpt和API2D配置")
-            # print(f"-----------生成第{index}段提示词-----------")
-            # negative = self.negative
-            # # 针对人物或者场景进行标签提示
-            # if tags_list:
-            #     p, n = await self.tag_handle(value, tags_list)
-            #     prompt = p + prompt
-            #     negative = n + negative
-            # data.append({
-            #     "index": index,
-            #     "text": value,
-            #     "prompt": self.prompt + prompt,
-            #     "negative": negative,
-            # })
             data.append(await self.failover(instance_class_list, index, value, tags_list))
         return data
 
@@ -73,10 +46,6 @@ class Main:
                 icl = instance_class_list.pop(0)
                 print(f"-------{icl}--------")
                 return await self.failover(instance_class_list, index, value, tags_list)
-                # prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
-                # if not prompt:
-                #     print("------fastgpt和API2D都无法使用---------")
-                #     raise Exception("请检查代码")
             elif len(instance_class_list) == 1:
                 icl = instance_class_list.pop(0)
                 print(f"-------{icl}--------")
