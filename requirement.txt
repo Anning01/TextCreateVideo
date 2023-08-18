@@ -1,5 +1,5 @@
 moviepy==1.0.3
-numpy==1.25.2
+numpy
 Pillow==10.0.0
 requests==2.31.0
 uvicorn==0.23.2
