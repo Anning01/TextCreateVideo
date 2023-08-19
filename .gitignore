@@ -7,3 +7,6 @@ sql_app.db
 test
 一键启动.bat
 一键安装.bat
+admin/setup.py
+admin/loacl_views.py
+loacl_main.py
