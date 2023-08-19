@@ -7,6 +7,8 @@ sql_app.db
 test
 一键启动.bat
 一键安装.bat
+一键安装（mac）.sh
+一键启动（mac）.sh
 admin/setup.py
 admin/local_views.py
 loacl_main.py

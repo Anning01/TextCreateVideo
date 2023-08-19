@@ -1,12 +1,17 @@
+import re
+
+import requests
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, JSONResponse
 
-import admin.views
 from admin import models
 from admin.databases import engine
+import admin.views
+import uuid
 
 """
 第一步、将用户输入的文本进行切割，按照逗号或者句号切割
@@ -40,10 +45,41 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
 origins = [
     "*",
 ]
+
+
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        return JSONResponse({"code": 0, "message": str(e)}, status_code=200)
+
+
+# 自定义中间件
+class AuthMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope['type'] != 'http':
+            await self.app(scope, receive, send)
+            return
+
+        # 获取请求头的Authorization
+        headers = dict(scope['headers'])
+        token = headers.get(b'authorization')
+        token = str(token)
+        if 'Bearer' in token:
+            token = token.replace("Bearer ", "")
+            if token:
+                # 验证token
+                verify_token(token)
+        await self.app(scope, receive, send)
+
+
+app.middleware('http')(catch_exceptions_middleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +88,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(AuthMiddleware)
+
+
+# 验证token函数
+def verify_token(token: str):
+    mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
+    token = token[2:-1]
+    headers = {"Authorization": "Bearer " + token, "Content-Type": "application/json"}
+    res = requests.get(f"http://8.134.91.58/mac/?mac_address={mac}", headers=headers)
+    data = res.json()
+    if res.status_code != 200 or data.get("code") != 200:
+        raise Exception(data.get("msg", "服务器异常"))
+    return True
 
 
 @app.get("/", response_class=HTMLResponse)
