@@ -2,7 +2,7 @@
   {
     "description": "推理步数",
     "key": "steps",
-    "value": 10,
+    "value": 20,
     "type": "int"
   },
   {
@@ -10,6 +10,67 @@
     "key": "cfg_scale",
     "value": 7,
     "type": "int"
+  },
+  {
+    "description": "生成图片宽度",
+    "key": "width",
+    "value": 1024,
+    "type": "int"
+  },
+  {
+    "description": "生成图片高度",
+    "key": "height",
+    "value": 768,
+    "type": "int"
+  },
+  {
+    "description": "采样器选择",
+    "key": "sampler_name",
+    "value": "DPM adaptive",
+    "type": "selector",
+    "selector": [
+      {
+        "name": "快速迭代,自适应采样够用",
+        "value": "DPM adaptive"
+      },
+      {
+        "name": "极致画质",
+        "value": "DPM++ SDE Karras"
+      },{
+        "name": "早期默认采样器,速度快但质量一般",
+        "value": "Euler a"
+      },{
+        "name": "优化后的Euler采样器,速度快质量較好",
+        "value": "Euler"
+      },{
+        "name": "使用正态分布,质量优于Euler",
+        "value": "LMS"
+      },{
+        "name": "改进的DIMS采样器,质量較高",
+        "value": "DDIM"
+      },{
+        "name": "LMS的改进版,速度快质量高",
+        "value": "PLMS"
+      },{
+        "name": "DPM系列采样器的早期版本",
+        "value": "DPM SDE Karras"
+      },{
+        "name": "DPM系列采样器的早期版本",
+        "value": "DPM SDE Karras"
+      },{
+        "name": "DPM++的升级版本,质量最高",
+        "value": "DPM++ 2M Karras"
+      },{
+        "name": "在DPM++的基础上加入Erf函数去噪",
+        "value": "DPM++ 2M ERF Karras"
+      }
+    ]
+  },
+  {
+    "description": "负向提示",
+    "key": "negative_prompt",
+    "value": "badhandv4,ng_deepnegative_v1_64t,worst quality,low quality,normal quality,lowers,monochrome,grayscales,skin spots,acnes,skin blemishes,age spot,6 more fingers on one hand,deformity,bad legs,error legs,bad feet,malformed limbs,extra limbs,ugly,poorly drawn hands,poorly drawn feet,poorly drawn face,text,mutilated,extra fingers,mutated hands,mutation,bad anatomy,cloned face,disfigured,fused fingers",
+    "type": "str"
   },
   {
     "description": "第一阶段图像宽度",
@@ -22,24 +83,6 @@
     "key": "firstphase_height",
     "value": 0,
     "type": "int"
-  },
-  {
-    "description": "生成图片宽度",
-    "key": "width",
-    "value": 512,
-    "type": "int"
-  },
-  {
-    "description": "生成图片高度",
-    "key": "height",
-    "value": 512,
-    "type": "int"
-  },
-  {
-    "description": "负向提示",
-    "key": "negative_prompt",
-    "value": "badhandv4,ng_deepnegative_v1_64t,worst quality,low quality,normal quality,lowers,monochrome,grayscales,skin spots,acnes,skin blemishes,age spot,6 more fingers on one hand,deformity,bad legs,error legs,bad feet,malformed limbs,extra limbs,ugly,poorly drawn hands,poorly drawn feet,poorly drawn face,text,mutilated,extra fingers,mutated hands,mutation,bad anatomy,cloned face,disfigured,fused fingers",
-    "type": "str"
   },
   {
     "description": "是否启用高分辨率上采样,可选true/false",
@@ -126,12 +169,6 @@
     "key": "subseed_strength",
     "value": 0,
     "type": "int"
-  },
-  {
-    "description": "采样器选择",
-    "key": "sampler_name",
-    "value": "DPM adaptive",
-    "type": "str"
   },
   {
     "description": "批量生成大小",

@@ -11,4 +11,4 @@ test
 一键启动（mac）.sh
 admin/setup.py
 admin/local_views.py
-loacl_main.py
+local_main.py
