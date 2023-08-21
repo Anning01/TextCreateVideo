@@ -52,7 +52,7 @@ class BookSectionType(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class BookVoiceType(BaseModel):
@@ -63,7 +63,7 @@ class BookVoiceType(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class BookPicturesType(BaseModel):
@@ -74,7 +74,7 @@ class BookPicturesType(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class BookClassType(BaseModel):
