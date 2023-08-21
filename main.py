@@ -11,7 +11,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from admin import models
 from admin.databases import engine
 import admin.views
-import uuid
+
 
 """
 第一步、将用户输入的文本进行切割，按照逗号或者句号切割
@@ -93,7 +93,8 @@ app.add_middleware(AuthMiddleware)
 
 # 验证token函数
 def verify_token(token: str):
-    mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
+    mac = admin.views.get_mac_address()
+    # mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
     token = token[2:-1]
     headers = {"Authorization": "Bearer " + token, "Content-Type": "application/json"}
     res = requests.get(f"http://8.134.91.58/mac/?mac_address={mac}", headers=headers)
