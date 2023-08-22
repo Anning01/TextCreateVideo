@@ -4,8 +4,6 @@
 # @email:anningforchina@gmail.com
 # @time:2023/08/19 10:06
 # @file:views.py
-
-
 import asyncio
 import json
 import os
@@ -164,7 +162,9 @@ async def create_video(id, db: SessionLocal = Depends(get_db)):
         path = str(project_path) + book.path
         book.status = StatusEnum.underway
         db.commit()
-        threading.Thread(target=CreateVideo().thread_func, args=[book, path, db, config, scene_tag, sd_config]).start()
+        t = threading.Thread(target=CreateVideo().thread_func, args=[book, path, db, config, scene_tag, sd_config])
+        t.daemon = True
+        t.start()
         return success_data({}, message="视频生成任务启动成功！")
     return error_data("书不存在！")
 
@@ -179,11 +179,11 @@ class CreateVideo:
         except Exception as error:
             status = StatusEnum.failure
             fail_info = str(error)
-        finally:
-            stmt = update(Book).where(Book.id == book.id).values(fail_info=fail_info, status=status)
-            # 执行更新操作
-            db.execute(stmt)
-            db.commit()
+        stmt = update(Book).where(Book.id == book.id).values(fail_info=fail_info, status=status)
+        # 执行更新操作
+        db.execute(stmt)
+        db.commit()
+        return
 
     def main(self, book, path, db, config, scene_tag, sd_config):
         """
