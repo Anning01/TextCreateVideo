@@ -19,25 +19,25 @@ if not all((client_id, client_secret, (all([apikey, appId]), ForwardKey), sd_url
     raise ValueError("Environment variables are missing.")
 
 
-async def main(bookname: str, tags: list | None = None):
+def main(bookname: str, tags: list | None = None):
     # 处理文本
     t = TMain()
-    text_list = list(filter(None, await t.txt_handle(f'{bookname}.txt')))
+    text_list = list(filter(None, t.txt_handle(f'{bookname}.txt')))
     print(text_list)
 
     # 生成音频
     s = SMain()
-    audio_list = await s.text_to_audio(text_list)
+    audio_list = s.text_to_audio(text_list)
     print(audio_list)
 
     # 生成提示词
     p = PMain()
-    object_list = await p.create_prompt_words(text_list, tags)
+    object_list = p.create_prompt_words(text_list, tags)
     print(object_list)
 
     # 生成图片
     gp = GPMain()
-    picture_path_list = await gp.create_picture(object_list)
+    picture_path_list = gp.create_picture(object_list)
     print(picture_path_list)
 
     # 合并视频

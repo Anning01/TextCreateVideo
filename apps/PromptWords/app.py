@@ -19,7 +19,7 @@ class Main:
     # 不好用
     # prompt = "moe style, large deep clear eyes, straight long length white hair, medieval dress, exposed shoulders, focus on face, full body, glamorous body, legs, high angle, hyper angle pose, trending on pixiv, detailed, illustration, shadowverse, granblue fantasy, cygames, mushimaro, anime detailed line work, game character, comic cover, volumetric lighting, atmospheric lighting"
 
-    async def create_prompt_words(self, text_list: list, tags_list: list | None):
+    def create_prompt_words(self, text_list: list, tags_list: list | None):
         """
         生成英文提示词
         :return: [{prompt, negative, text, index},...]
@@ -36,16 +36,16 @@ class Main:
         if not instance_class_list:
             raise Exception("chatgpt fastGPT API2D 全部无法使用, 请检查配置")
         for index, value in enumerate(text_list):
-            data.append(await self.failover(instance_class_list, index, value, tags_list))
+            data.append(self.failover(instance_class_list, index, value, tags_list))
         return data
 
-    async def failover(self, instance_class_list, index, value, tags_list):
-        prompt = await instance_class_list[0].prompt_generation_chatgpt(value)
+    def failover(self, instance_class_list, index, value, tags_list):
+        prompt = instance_class_list[0].prompt_generation_chatgpt(value)
         if not prompt:
             if len(instance_class_list) > 1:
                 icl = instance_class_list.pop(0)
                 print(f"-------{icl}--------")
-                return await self.failover(instance_class_list, index, value, tags_list)
+                return self.failover(instance_class_list, index, value, tags_list)
             elif len(instance_class_list) == 1:
                 icl = instance_class_list.pop(0)
                 print(f"-------{icl}--------")
@@ -54,7 +54,7 @@ class Main:
         negative = self.negative
         # 针对人物或者场景进行标签提示
         if tags_list:
-            p, n = await self.tag_handle(value, tags_list)
+            p, n = self.tag_handle(value, tags_list)
             prompt = p + prompt
             negative = n + negative
         return {
@@ -64,7 +64,7 @@ class Main:
                 "negative": negative,
             }
 
-    async def create_prompt_words2(self, text_list: list, tags_list: list | None):
+    def create_prompt_words2(self, text_list: list, tags_list: list | None):
         """
         生成英文提示词
         :return: [{prompt, negative, text, index},...]
@@ -72,12 +72,12 @@ class Main:
         # 包含着 坐标、英文提示词、英文反向提示词、中文文本 列表
         data = []
         for index, value in enumerate(text_list):
-            prompt = await OM().prompt_generation_chatgpt(value)
+            prompt = OM().prompt_generation_chatgpt(value)
             print(f"-----------生成第{index}段提示词-----------")
             negative = self.negative
             # 针对人物或者场景进行标签提示
             if tags_list:
-                p, n = await self.tag_handle(value, tags_list)
+                p, n = self.tag_handle(value, tags_list)
                 prompt = p + prompt
                 negative = n + negative
             data.append({

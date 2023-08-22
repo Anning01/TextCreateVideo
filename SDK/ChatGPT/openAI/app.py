@@ -42,7 +42,7 @@ class Main:
     def __str__(self):
         return "ChatGPT请求失败，请检查配置！"
 
-    async def prompt_generation_chatgpt(self, param):
+    def prompt_generation_chatgpt(self, param):
         openai.api_key = openAPI_KEY
 
         try:
@@ -58,4 +58,4 @@ class Main:
 
 
 if __name__ == '__main__':
-    asyncio.run(Main().prompt_generation_chatgpt("天空一声惊响，老子闪亮登场。"))
+    Main().prompt_generation_chatgpt("天空一声惊响，老子闪亮登场。")

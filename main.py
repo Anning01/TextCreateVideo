@@ -1,6 +1,3 @@
-import re
-
-import requests
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -8,10 +5,9 @@ from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse, JSONResponse
 
-from admin import models
 from admin.databases import engine
-import admin.views
 
+from admin import models, views
 
 """
 第一步、将用户输入的文本进行切割，按照逗号或者句号切割
@@ -66,16 +62,16 @@ class AuthMiddleware:
         if scope['type'] != 'http':
             await self.app(scope, receive, send)
             return
-
-        # 获取请求头的Authorization
-        headers = dict(scope['headers'])
-        token = headers.get(b'authorization')
-        token = str(token)
-        if 'Bearer' in token:
-            token = token.replace("Bearer ", "")
-            if token:
-                # 验证token
-                verify_token(token)
+        if scope['path'] == '/book':
+            # 获取请求头的Authorization
+            headers = dict(scope['headers'])
+            token = headers.get(b'authorization')
+            token = str(token)
+            if 'Bearer' in token:
+                token = token.replace("Bearer ", "")
+                if token:
+                    # 验证token
+                    views.verify_token(token)
         await self.app(scope, receive, send)
 
 
@@ -91,19 +87,6 @@ app.add_middleware(
 app.add_middleware(AuthMiddleware)
 
 
-# 验证token函数
-def verify_token(token: str):
-    mac = admin.views.get_mac_address()
-    # mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
-    token = token[2:-1]
-    headers = {"Authorization": "Bearer " + token, "Content-Type": "application/json"}
-    res = requests.get(f"http://8.134.91.58/mac/?mac_address={mac}", headers=headers)
-    data = res.json()
-    if res.status_code != 200 or data.get("code") != 200:
-        raise Exception(data.get("msg", "服务器异常"))
-    return True
-
-
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return open("dist/index.html", 'r').read()
@@ -115,7 +98,7 @@ async def say_hello(name: str):
 
 
 app.include_router(
-    admin.views.router,
+    views.router,
     prefix="",
     tags=["后台"],
     responses={404: {"description": "Not found"}},

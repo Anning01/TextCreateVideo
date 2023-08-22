@@ -18,7 +18,7 @@ class Main:
     def __str__(self):
         return "API2D请求失败，请检查配置！"
 
-    async def prompt_generation_chatgpt(self, param):
+    def prompt_generation_chatgpt(self, param):
         # 发送HTTP POST请求
         headers = {
             'Content-Type': 'application/json',

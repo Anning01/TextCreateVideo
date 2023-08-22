@@ -19,7 +19,7 @@ class Main:
     client_id = client_id
     client_secret = client_secret
 
-    async def create_access_token(self):
+    def create_access_token(self):
         url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={self.client_id}&client_secret={self.client_secret}"
         payload = ""
         headers = {
@@ -34,22 +34,22 @@ class Main:
             json.dump(access_token, f)
         return access_token
 
-    async def get_access_token(self):
+    def get_access_token(self):
         if os.path.exists('access_token.json'):
             with open('access_token.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
             time = data.get("time")
             if time and (datetime.now() - datetime.strptime(time, '%Y-%m-%d')).days >= 29:
-                return await self.create_access_token()
+                return self.create_access_token()
             return data
-        return await self.create_access_token()
+        return self.create_access_token()
 
-    async def text_to_audio(self, text: str, index: int, bookname=None, config=None):
+    def text_to_audio(self, text: str, index: int, bookname=None, config=None):
         url = "https://tsn.baidu.com/text2audio"
         text = text.encode('utf8')
         FORMATS = {3: "mp3", 4: "pcm", 5: "pcm", 6: "wav"}
         FORMAT = FORMATS[6]
-        access_token = await self.get_access_token()
+        access_token = self.get_access_token()
         data = {
             # 合成的文本，文本长度必须小于1024GBK字节。建议每次请求文本不超过120字节，约为60个汉字或者字母数字。
             "tex": text,
@@ -120,5 +120,4 @@ class Main:
 
 
 if __name__ == '__main__':
-    import asyncio
-    asyncio.run(Main().text_to_audio("叶无名是一个少林寺的俗家弟子，他天资聪颖，博览群书，精通天文地理和阴阳八卦", 1))
+    Main().text_to_audio("叶无名是一个少林寺的俗家弟子，他天资聪颖，博览群书，精通天文地理和阴阳八卦", 1)

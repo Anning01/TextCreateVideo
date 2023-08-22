@@ -11,7 +11,7 @@ from config import file_path
 
 class Main:
 
-    async def txt_handle(self, filepath):
+    def txt_handle(self, filepath):
         """
         txt文件处理
         :return:
@@ -21,10 +21,10 @@ class Main:
             raise FileNotFoundError(f"文件不存在，根路名为{path}")
         file = open(path, 'r', encoding='utf-8')
         content = file.read().replace('\n', '')
-        text_list = await self.txt_long(content.split('。'))
-        return await self.txt_short(text_list)
+        text_list = self.txt_long(content.split('。'))
+        return self.txt_short(text_list)
 
-    async def txt_short(self, text_list: list):
+    def txt_short(self, text_list: list):
         """
         处理文本过短的问题
         :return:
@@ -46,7 +46,7 @@ class Main:
                 text_list.pop(index)
         return text_list
 
-    async def txt_long(self, text_list: list):
+    def txt_long(self, text_list: list):
         """
         处理文本过长的问题
         :return:
@@ -56,7 +56,7 @@ class Main:
             # print(index, value)
             if len(value) > 60:
                 # value_list = await self.recursion(value)
-                value_list = await self.symbol_split(value, ['，', '?'])
+                value_list = self.symbol_split(value, ['，', '?'])
                 # print(index)
                 # x = text_list.pop(index)
                 new_list.extend(value_list)
@@ -68,12 +68,12 @@ class Main:
                 new_list.extend([value])
         return new_list
 
-    async def recursion(self, value):
+    def recursion(self, value):
         value_list = value.split("，")
         if len(value_list) >= 2:
             for i in value_list:
                 if len(i) > 60:
-                    return await self.recursion(i)
+                    return self.recursion(i)
             head_str = ""
             foot_str = ""
             while value_list:
@@ -97,23 +97,23 @@ class Main:
             value_list = value[len(value) // 2]
             for i in value_list:
                 if len(i) > 60:
-                    return await self.recursion(i)
+                    return self.recursion(i)
             return value_list
 
-    async def symbol_split(self, value, symbol_list):
+    def symbol_split(self, value, symbol_list):
         if not symbol_list:
             return [value]
         value_list = value.split(symbol_list.pop(0))
         for index, value in enumerate(value_list):
             if len(value) > 60:
-                return await self.symbol_split(value, symbol_list)
+                return self.symbol_split(value, symbol_list)
         return value_list
 
-    async def question_mark_split(self, value):
+    def question_mark_split(self, value):
         value_list = value.split("？")
         for index, value in enumerate(value_list):
             if len(value) > 60:
-                value_list = await self.recursion(value)
+                value_list = self.recursion(value)
                 value_list.pop(index)
                 for i, v in enumerate(value_list):
                     value_list.insert(index + i, v)
@@ -121,5 +121,4 @@ class Main:
 
 
 if __name__ == '__main__':
-    import asyncio
-    asyncio.run(Main().txt_handle("道诡异仙.txt"))
+    Main().txt_handle("道诡异仙.txt")
