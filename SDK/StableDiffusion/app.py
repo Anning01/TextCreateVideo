@@ -31,6 +31,8 @@ class Main:
                     novel_dict = {}
                     for item in sd_config:
                         novel_dict[item['key']] = item['value']
+                    novel_dict['prompt'] = f"{obj['prompt']}"
+                    del novel_dict['default_prompt']
                 else:
                     novel_dict = {
                         # 高分辨率放大，true=启用，false=关闭

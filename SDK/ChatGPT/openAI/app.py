@@ -42,12 +42,11 @@ class Main:
     def __str__(self):
         return "ChatGPT请求失败，请检查配置！"
 
-    def prompt_generation_chatgpt(self, param):
+    def prompt_generation_chatgpt(self, param, gpt_prompt):
         openai.api_key = openAPI_KEY
-
         try:
             completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[
-                {"role": "user", "content": prompt_head + param}
+                {"role": "user", "content": gpt_prompt.get("prompt") + param}
             ], timeout=5)
         except Timeout:
             raise "ChatGPT请求超时，请检查配置！"

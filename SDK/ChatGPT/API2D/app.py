@@ -18,7 +18,7 @@ class Main:
     def __str__(self):
         return "API2D请求失败，请检查配置！"
 
-    def prompt_generation_chatgpt(self, param):
+    def prompt_generation_chatgpt(self, param, gpt_prompt):
         # 发送HTTP POST请求
         headers = {
             'Content-Type': 'application/json',
@@ -27,7 +27,7 @@ class Main:
         }
         data = {
             "model": "gpt-3.5-turbo",
-            "messages": [{"role": "user", "content": '根据下面的内容描述，生成一副画面并用英文单词表示：' + param, }]
+            "messages": [{"role": "user", "content": gpt_prompt.get("prompt") + param, }]
         }
         try:
             response = requests.post(self.url, headers=headers, json=data, timeout=15)
