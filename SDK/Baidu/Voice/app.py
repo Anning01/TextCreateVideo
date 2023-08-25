@@ -74,7 +74,7 @@ class Main:
             "vol": config.vol if config else 5,
             # (基础音库) 度小宇=1，度小美=0，度逍遥（基础）=3，度丫丫=4
             # (精品音库) 度逍遥（精品）=5003，度小鹿=5118，度博文=106，度小童=110，度小萌=111，度米朵=103，度小娇=5
-            "per": config.per if config else 5003,
+            "per": config.per if config else 1,
             # 3为mp3格式(默认)； 4为pcm-16k；5为pcm-8k；6为wav（内容同pcm-16k）; 注意aue=4或者6是语音识别要求的格式，但是音频内容不是语音识别要求的自然人发音，所以识别效果会受影响。
             "aue": FORMAT
         }
