@@ -61,7 +61,7 @@ class Main:
                 "negative": negative,
             }
 
-    async def tag_handle(self, text: str, tag_list: list):
+    def tag_handle(self, text: str, tag_list: list):
         """
         用于处理用户的标签
         :return:
