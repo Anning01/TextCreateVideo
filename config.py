@@ -16,8 +16,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 百度API配置 填后面 "" 里面就行
-client_id = os.getenv("client_id") or ""  # 这里填写百度的 API Key
-client_secret = os.getenv("client_secret") or ""  # 这里填写百度的 Secret Key
+client_id = os.getenv("client_id") or "300jKqvYq6Zs0iZeg8bpsts8"  # 这里填写百度的 API Key
+client_secret = os.getenv("client_secret") or "bpMuZmRwP9bcYCZRo7XUXdEgkDGoG27e"  # 这里填写百度的 Secret Key
 
 # fastgpt 配置 需要自己配置 填后面 "" 里面就行  https://fastgpt.run/
 apikey = os.getenv("apikey") or ""
@@ -25,7 +25,7 @@ appId = os.getenv("appId") or ""
 
 # API2D 的配置 防止 fastapi 出错 # 和fastapi 选一个就行
 ForwardKey = os.getenv("ForwardKey") or ""
-openAPI_KEY = os.getenv("openAPI_KEY") or ""
+openAPI_KEY = os.getenv("openAPI_KEY") or "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|org-y4P8QfqVaifZkcGnzlsSichJ"
 
 # Stable Diffusion 启动路径配置 默认
 sd_url = os.getenv("sd_url") or "http://127.0.0.1:7860/sdapi/v1/txt2img"
