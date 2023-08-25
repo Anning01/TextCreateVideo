@@ -7,6 +7,7 @@
 import requests
 from requests import Timeout
 
+from config import openAPI_KEY
 
 prompt_head = """Here, I introduce the concept of Prompts from the StableDiffusion algorithm, also known as hints. 
     The following prompts are used to guide the AI painting model to create images. 
@@ -28,7 +29,7 @@ prompt_head = """Here, I introduce the concept of Prompts from the StableDiffusi
 
 
 class Main:
-    API_KEY = "openAPI_KEY"
+    API_KEY = openAPI_KEY
     url = "https://api.openai.com/v1/chat/completions"
 
     def __str__(self):
