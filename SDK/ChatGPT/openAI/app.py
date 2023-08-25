@@ -6,6 +6,7 @@
 # @file:app.py
 import requests
 from requests import Timeout
+from retrying import retry
 
 from config import openAPI_KEY
 
@@ -63,9 +64,9 @@ class Main:
         }
         print("-----------开始请求ChatGPT-----------")
         try:
-            response = requests.post(self.url, headers=headers, json=data, timeout=15)
+            # response = requests.post(self.url, headers=headers, json=data, timeout=5)
+            response = self.get_response(headers, data)
         except Timeout:
-
             message = "ChatGPT请求超时,15秒未响应！，请检查网络！"
             return False, message
         except Exception as e:
@@ -77,12 +78,10 @@ class Main:
             return False, data["error"]["message"]
         return result, message
 
+    @retry(stop_max_attempt_number=5)
+    def get_response(self, headers, data):
+        return requests.post(self.url, headers=headers, json=data, timeout=20)
+
 
 if __name__ == '__main__':
     Main().prompt_generation_chatgpt("天空一声惊响，老子闪亮登场。", {"prompt": prompt_head})
-
-    a = {'id': 'chatcmpl-7rHDWcyQHe1tXSx9pjHdJCKBFdzkt', 'object': 'chat.completion', 'created': 1692931922,
-         'model': 'gpt-3.5-turbo-0613', 'choices': [{'index': 0, 'message': {'role': 'assistant',
-                                                                             'content': '(masterpiece:1.2), (best quality), digital art, a powerful and charismatic middle-aged man with a long white beard and flowing robes, (wise and authoritative), standing tall in a burst of lightning and thunder in the night sky.'},
-                                                     'finish_reason': 'stop'}],
-         'usage': {'prompt_tokens': 505, 'completion_tokens': 49, 'total_tokens': 554}}
