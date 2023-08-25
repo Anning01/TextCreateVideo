@@ -25,7 +25,7 @@ appId = os.getenv("appId") or ""
 
 # API2D 的配置 防止 fastapi 出错 # 和fastapi 选一个就行
 ForwardKey = os.getenv("ForwardKey") or ""
-openAPI_KEY = os.getenv("openAPI_KEY") or "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"
+openAPI_KEY = os.getenv("openAPI_KEY") or "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"
 
 # Stable Diffusion 启动路径配置 默认
 sd_url = os.getenv("sd_url") or "http://127.0.0.1:7860/sdapi/v1/txt2img"
