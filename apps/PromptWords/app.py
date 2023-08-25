@@ -38,16 +38,14 @@ class Main:
         return data
 
     def failover(self, instance_class_list, index, value, tags_list, prompt_dict):
-        prompt = instance_class_list[0].prompt_generation_chatgpt(value, prompt_dict)
+        prompt, message = instance_class_list[0].prompt_generation_chatgpt(value, prompt_dict)
         if not prompt:
             if len(instance_class_list) > 1:
-                icl = instance_class_list.pop(0)
-                print(f"-------{icl}--------")
+                print(f"-------{message}--------")
+                instance_class_list.pop(0)
                 return self.failover(instance_class_list, index, value, tags_list, prompt_dict)
-            elif len(instance_class_list) == 1:
-                icl = instance_class_list.pop(0)
-                print(f"-------{icl}--------")
-            raise Exception("chatgpt fastGPT API2D 全部无法使用, 请检查配置")
+            print(f"-------{message}--------")
+            raise Exception(message)
         print(f"-----------生成第{index}段提示词-----------")
         negative = prompt_dict.get("negative")
         # 针对人物或者场景进行标签提示

@@ -34,7 +34,12 @@ class Main:
             json.dump(access_token, f)
         return access_token
 
-    def get_access_token(self):
+    def get_access_token(self, token):
+        if self.client_id == "A4MCvofRU3qNBXCUWlcLAq9Q":
+            headers = {"Authorization": token, "Content-Type": "application/json"}
+            res = requests.get(f"http://8.134.91.58/baidu/access_token/", headers=headers)
+            if res.json().get("access_token"):
+                return res.json().get("access_token")
         if os.path.exists('access_token.json'):
             with open('access_token.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -44,12 +49,12 @@ class Main:
             return data
         return self.create_access_token()
 
-    def text_to_audio(self, text: str, index: int, bookname=None, config=None):
+    def text_to_audio(self, text: str, index: int, bookname=None, config=None, token=None):
         url = "https://tsn.baidu.com/text2audio"
         text = text.encode('utf8')
         FORMATS = {3: "mp3", 4: "pcm", 5: "pcm", 6: "wav"}
         FORMAT = FORMATS[6]
-        access_token = self.get_access_token()
+        access_token = self.get_access_token(token)
         data = {
             # 合成的文本，文本长度必须小于1024GBK字节。建议每次请求文本不超过120字节，约为60个汉字或者字母数字。
             "tex": text,
@@ -75,7 +80,7 @@ class Main:
         }
         data = urllib.parse.urlencode(data)
         # 用流stream的方式获取url的数据
-        response = requests.post(url, data, stream=True, timeout=15)
+        response = requests.post(url, data, stream=True, timeout=8)
 
         # 拿到文件的长度，并把total初始化为0
         total = int(response.headers.get('content-length', 0))

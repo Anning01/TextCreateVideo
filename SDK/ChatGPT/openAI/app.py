@@ -4,16 +4,8 @@
 # @email:anningforchina@gmail.com
 # @time:2023/08/15 11:38
 # @file:app.py
-import asyncio
-
-import openai
-# import requests
-# import json
-
-# from requests import ConnectTimeout
+import requests
 from requests import Timeout
-
-from config import openAPI_KEY
 
 
 prompt_head = """Here, I introduce the concept of Prompts from the StableDiffusion algorithm, also known as hints. 
@@ -36,25 +28,60 @@ prompt_head = """Here, I introduce the concept of Prompts from the StableDiffusi
 
 
 class Main:
-    API_KEY = openAPI_KEY
+    API_KEY = "openAPI_KEY"
     url = "https://api.openai.com/v1/chat/completions"
 
     def __str__(self):
         return "ChatGPT请求失败，请检查配置！"
 
     def prompt_generation_chatgpt(self, param, gpt_prompt):
-        openai.api_key = openAPI_KEY
-        try:
-            completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[
+        # openai.api_key = openAPI_KEY
+        # try:
+        #     completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[
+        #         {"role": "user", "content": gpt_prompt.get("prompt") + param}
+        #     ], timeout=5)
+        # except Timeout:
+        #     raise "ChatGPT请求超时，请检查配置！"
+        # except Exception as e:
+        #     print(e)
+        #     return False
+        # return completion.choices[0].message.content
+
+        # 构建请求数据
+        data = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
                 {"role": "user", "content": gpt_prompt.get("prompt") + param}
-            ], timeout=5)
+            ]
+        }
+        message = ""
+        # 设置请求头部
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.API_KEY}"
+        }
+        print("-----------开始请求ChatGPT-----------")
+        try:
+            response = requests.post(self.url, headers=headers, json=data, timeout=15)
         except Timeout:
-            raise "ChatGPT请求超时，请检查配置！"
+
+            message = "ChatGPT请求超时,15秒未响应！，请检查网络！"
+            return False, message
         except Exception as e:
-            print(e)
-            return False
-        return completion.choices[0].message.content
+            return False, str(e)
+        data = response.json()
+        try:
+            result = data["choices"][0]["message"]['content']
+        except:
+            return False, data["error"]["message"]
+        return result, message
 
 
 if __name__ == '__main__':
-    Main().prompt_generation_chatgpt("天空一声惊响，老子闪亮登场。")
+    Main().prompt_generation_chatgpt("天空一声惊响，老子闪亮登场。", {"prompt": prompt_head})
+
+    a = {'id': 'chatcmpl-7rHDWcyQHe1tXSx9pjHdJCKBFdzkt', 'object': 'chat.completion', 'created': 1692931922,
+         'model': 'gpt-3.5-turbo-0613', 'choices': [{'index': 0, 'message': {'role': 'assistant',
+                                                                             'content': '(masterpiece:1.2), (best quality), digital art, a powerful and charismatic middle-aged man with a long white beard and flowing robes, (wise and authoritative), standing tall in a burst of lightning and thunder in the night sky.'},
+                                                     'finish_reason': 'stop'}],
+         'usage': {'prompt_tokens': 505, 'completion_tokens': 49, 'total_tokens': 554}}

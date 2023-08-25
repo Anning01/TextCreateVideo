@@ -37,24 +37,22 @@ class Main:
             ]
         }
         json_data = json.dumps(data)
-        # 发送HTTP POST请求
+        print("-----------开始请求FastGPT-----------")
         try:
             response = requests.post(self.url, data=json_data, headers=headers, timeout=15)
         except ConnectTimeout:
-            raise ConnectionError("API2D连接超时，15秒未响应！")
+            return False, "FastGPT连接超时，15秒未响应！"
         result_json = json.loads(response.text)
         if response.status_code != 200:
-            print("-----------FastAPI出错了-----------")
-            return False
+            return False, "FastAPI返回状态码错误，请检查配置！"
         # 输出结果
         if result_json.get('choices'):
             try:
-                return result_json['choices'][0]['message']['content']
+                return result_json['choices'][0]['message']['content'], ""
             except:
-                raise Exception("FastAPI 接口格式发生变化，请加群联系开发者！")
+                return False, "FastAPI 接口格式发生变化，请加群联系开发者！"
         else:
-            print(f"-----------FastAPI {result_json.get('message')}-----------")
-            return False
+            return False, result_json.get('message')
 
 
 if __name__ == '__main__':

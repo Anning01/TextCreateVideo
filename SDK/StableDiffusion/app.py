@@ -122,7 +122,12 @@ class Main:
             except Exception as e:
                 print(e)
                 raise ConnectionError("Stable Diffusion 连接失败，请查看ip+端口是否匹配，是否开启。")
-            img_response = json.loads(html)
+            try:
+                img_response = json.loads(html)
+            except Exception as e:
+                if str(e) == "Expecting value: line 2 column 1 (char 1)":
+                    raise Exception(f"{self.sd_url} 返回数据异常，请查看是否开启，或者是否连接成功。")
+                raise Exception(str(html))
             images = img_response.get("images", None)
             if not images:
                 raise Exception(img_response.get("errors", "Stable Diffusion 返回数据异常，请查看ip+端口是否匹配，是否开启。"))

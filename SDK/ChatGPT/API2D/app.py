@@ -7,12 +7,11 @@
 
 import requests
 from config import ForwardKey
-from requests import ConnectTimeout, ConnectionError
-
+from requests import ConnectionError
+from requests import Timeout
 
 class Main:
     ForwardKey = ForwardKey
-    # url = "https://openai.api2d.net/v1/chat/completions"
     url = "https://oa.api2d.net/v1/chat/completions"
 
     def __str__(self):
@@ -29,22 +28,21 @@ class Main:
             "model": "gpt-3.5-turbo",
             "messages": [{"role": "user", "content": gpt_prompt.get("prompt") + param, }]
         }
+        print("-----------开始请求API2D-----------")
         try:
             response = requests.post(self.url, headers=headers, json=data, timeout=15)
-        except ConnectTimeout:
-            raise ConnectionError("API2D连接超时，15秒未响应！")
+        except Timeout:
+            return False, "API2D连接超时，15秒未响应！"
         except ConnectionError:
-            raise ConnectionError(f"连接错误，{self.url} 建立连接失败，请检查网络。")
+            return False, f"连接错误，{self.url} 建立连接失败，请检查网络。"
         except Exception as e:
-            raise Exception(e)
-
-        print("-----------进入API2D-----------")
+            return False, str(e)
         if response.status_code != 200:
-            return False
+            return False, response.json().get("message", "API2D返回状态码错误，请检查配置！")
         # 发送HTTP POST请求
         result_json = response.json()
         # 输出结果
-        return result_json["choices"][0]["message"]["content"]
+        return result_json["choices"][0]["message"]["content"], ""
 
 
 if __name__ == '__main__':
