@@ -36,19 +36,7 @@ class Main:
     def __str__(self):
         return "ChatGPT请求失败，请检查配置！"
 
-    def prompt_generation_chatgpt(self, param, gpt_prompt):
-        # openai.api_key = openAPI_KEY
-        # try:
-        #     completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[
-        #         {"role": "user", "content": gpt_prompt.get("prompt") + param}
-        #     ], timeout=5)
-        # except Timeout:
-        #     raise "ChatGPT请求超时，请检查配置！"
-        # except Exception as e:
-        #     print(e)
-        #     return False
-        # return completion.choices[0].message.content
-
+    def prompt_generation_chatgpt(self, param, gpt_prompt, api_key=None):
         # 构建请求数据
         data = {
             "model": "gpt-3.5-turbo",
@@ -60,7 +48,7 @@ class Main:
         # 设置请求头部
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.API_KEY}"
+            "Authorization": f"Bearer {api_key if api_key else self.API_KEY}"
         }
         print("-----------开始请求ChatGPT-----------")
         try:

@@ -55,15 +55,8 @@ class Main:
         for index, value in enumerate(text_list):
             # print(index, value)
             if len(value) > 60:
-                # value_list = await self.recursion(value)
                 value_list = self.symbol_split(value, ['，', '?'])
-                # print(index)
-                # x = text_list.pop(index)
                 new_list.extend(value_list)
-                # for i, v in enumerate(value_list):
-                #     print(v)
-                #     new_list.append(v)
-                    # text_list.insert(index + i, v)
             else:
                 new_list.extend([value])
         return new_list
