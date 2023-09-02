@@ -53,28 +53,6 @@ async def catch_exceptions_middleware(request: Request, call_next):
         return JSONResponse({"code": 0, "message": str(e)}, status_code=200)
 
 
-# 自定义中间件
-class AuthMiddleware:
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope['type'] != 'http':
-            await self.app(scope, receive, send)
-            return
-        if scope['path'] == '/book':
-            # 获取请求头的Authorization
-            headers = dict(scope['headers'])
-            token = headers.get(b'authorization')
-            token = str(token)
-            if 'Bearer' in token:
-                token = token.replace("Bearer ", "")
-                if token:
-                    # 验证token
-                    views.verify_token(token)
-        await self.app(scope, receive, send)
-
-
 app.middleware('http')(catch_exceptions_middleware)
 
 app.add_middleware(
@@ -84,7 +62,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(AuthMiddleware)
 
 
 @app.get("/", response_class=HTMLResponse)
