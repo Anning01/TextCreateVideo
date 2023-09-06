@@ -121,7 +121,6 @@ async def create_book(file: UploadFile = File(...), db: SessionLocal = Depends(g
 
 @router.get("/book/create/{id}")
 async def create_video(id, request: Request, db: SessionLocal = Depends(get_db)):
-    token = request.headers['authorization']
     book = db.query(Book).get(id)
     config = db.query(SystemConfig).first()
     scene_tag = db.query(PromptTags).filter(PromptTags.book_id == book.id).all()
@@ -153,7 +152,7 @@ async def create_video(id, request: Request, db: SessionLocal = Depends(get_db))
         book.status = StatusEnum.underway
         db.commit()
         t = threading.Thread(target=CreateVideo().thread_func,
-                             args=[book, path, db, config, scene_tag, sd_config, prompt_dict, token])
+                             args=[book, path, db, config, scene_tag, sd_config, prompt_dict])
         t.daemon = True
         t.start()
         return success_data({}, message="视频生成任务启动成功！")
@@ -162,11 +161,11 @@ async def create_video(id, request: Request, db: SessionLocal = Depends(get_db))
 
 class CreateVideo:
 
-    def thread_func(self, book, path, db, config, scene_tag, sd_config, prompt_dict, token):
+    def thread_func(self, book, path, db, config, scene_tag, sd_config, prompt_dict):
         status = StatusEnum.complete
         fail_info = ''
         try:
-            self.main(book, path, db, config, scene_tag, sd_config, prompt_dict, token)
+            self.main(book, path, db, config, scene_tag, sd_config, prompt_dict)
         except Exception as error:
             status = StatusEnum.failure
             fail_info = str(error)
@@ -176,7 +175,7 @@ class CreateVideo:
         db.commit()
         return
 
-    def main(self, book, path, db, config, scene_tag, sd_config, prompt_dict, token):
+    def main(self, book, path, db, config, scene_tag, sd_config, prompt_dict):
         """
         启动此方法，异步生成图片，语音，提示词
         :return:
@@ -226,7 +225,7 @@ class CreateVideo:
                 db.commit()
             config = db.merge(config)
             # 生成音频任务
-            audio_list = self.text_to_audio(text_list, book.name, config, token)
+            audio_list = self.text_to_audio(text_list, book.name, config)
             audio_model_list = []
             for index, value in enumerate(audio_list):
                 audio_model_list.append(BookVoice(
@@ -281,13 +280,13 @@ class CreateVideo:
         text_list = t.txt_long(content.split('。'))
         return t.txt_short(text_list)
 
-    def text_to_audio(self, text_list, bookname, config, token):
+    def text_to_audio(self, text_list, bookname, config):
         """
         生成音频
         :return:
         """
         s = SMain()
-        audio_list = s.text_to_audio(text_list, bookname=bookname, config=config, token=token)
+        audio_list = s.text_to_audio(text_list, bookname=bookname, config=config)
         return audio_list
 
     def create_prompt_words(self, text_list, tags=None, prompt_dict=None):
