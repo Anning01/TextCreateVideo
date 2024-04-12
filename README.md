@@ -1,7 +1,7 @@
 <center><h1>TextCreateVideo</h1></center>
 
-# <p style="color: red">由于之前修改过多，导致维护困难，此项目已经停止维护!!!!</p>
-# <p style="color: green">请使用最新的</p><a herf="https://github.com/Anning01/ComicTweets">ComicTweets</a>
+<h4 style="color: red">由于之前修改过多，导致维护困难，此项目已经停止维护!!!!</h3>
+<h3 style="color: green">请使用最新的</h3><a herf="https://github.com/Anning01/ComicTweets">ComicTweets</a>
 <h2>介绍</h2>
 受到项目 <a herf="https://github.com/guifaChild/text_to_vedio">text_to_vedio</a>
 启发，编写此代码，用于帮助自媒体快速生产视频，目前只能通过文字来生成AI图片，后期会支持图片生成图片，增加web页面，让不会技术也能通过页面配置生成图片，项目主要是使用chatGPT+百度云API+Stable
