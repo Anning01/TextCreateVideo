@@ -349,7 +349,7 @@ async def config(db: SessionLocal = Depends(get_db)):
 async def update_config(config: Config, db: SessionLocal = Depends(get_db)):
     env = os.path.join(project_path, '.env')
     env_text = f"client_id='{config.baidu_api_key}'\nclient_secret='{config.baidu_secret_key}'\napikey='{config.fastgpt_api_key}'\nappId='{config.fastgpt_appid}'\nForwardKey='{config.api2d_forward_key}'\nopenAPI_KEY='{config.openAPI_KEY}'\nsd_url='{config.sd_url}/sdapi/v1/txt2img'"
-    with open(env, 'w') as f:
+    with open(env, 'w', encoding='utf-8') as f:
         f.write(env_text)
     baidu_config = db.query(SystemConfig).first()
     if baidu_config:
